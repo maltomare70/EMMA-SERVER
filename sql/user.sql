@@ -1,0 +1,8 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(100) NOT NULL,
+    pwd VARCHAR(100) NOT NULL,    
+    data_creazione TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+

@@ -1,0 +1,6 @@
+﻿.idea
+.vs
+EmmaServer/bin
+EmmaServer/obj
+EmmaServer.Entities/bin
+EmmaServer.Entities/obj

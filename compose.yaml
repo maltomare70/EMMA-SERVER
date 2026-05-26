@@ -1,0 +1,7 @@
+﻿services:
+  emmaserver:
+    image: emmaserver
+    build:
+      context: .
+      dockerfile: EmmaServer/Dockerfile
+

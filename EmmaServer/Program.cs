@@ -1,0 +1,171 @@
+using EmmaServer;
+using EmmaServer.Entities;
+using EmmaServer.Repositories;
+using EmmaServer.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
+using Npgsql;
+using System.Data;
+using System.Net.Http.Headers;
+using System.Text.Json;
+
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
+
+builder.Services.AddHttpContextAccessor();
+
+// 2. Registriamo il provider della connessione dinamica
+builder.Services.AddScoped<IUserConnectionProvider, UserConnectionProvider>();
+builder.Services.AddScoped(typeof(IRepositoryGenerico<>), typeof(RepositoryGenerico<>));
+builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+
+// 1. Registra la connessione al DB (o il tuo IUserConnectionProvider dinamico)
+builder.Services.AddScoped<IDbConnection>(sp => new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// 2. Registra il validatore specifico per l'interfaccia generica
+builder.Services.AddScoped<IBasicAuthValidator, JsonFileAuthValidator>();
+
+// 3. Registra l'autenticazione Basic (che troverà automaticamente IBasicAuthValidator)
+builder.Services.AddAuthentication("BasicAuthentication")
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddHttpClient();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+
+/// Endpoint per l'upload del file PDF e l'inoltro a un'API esterna
+app.MapPost("/api/doc/ddt", async (IFormFile file, [FromServices] IHttpClientFactory httpClientFactory, [FromServices] IConfiguration configuration) =>
+{
+    // 1. Validate that a file was actually uploaded
+    if (file == null || file.Length == 0) return Results.BadRequest("No file was uploaded.");
+
+    // 2. Validate that the file is a PDF
+    var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+    if (extension != ".pdf")
+    {
+        return Results.BadRequest("Only PDF files are allowed.");
+    }
+    try
+    {
+        //// Example A: Save the file to a local directory
+        //var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+        //if (!Directory.Exists(uploadsFolder))
+        //{
+        //    Directory.CreateDirectory(uploadsFolder);
+        //}
+
+        //var filePath = Path.Combine(uploadsFolder, file.FileName);
+
+        //using (var stream = new FileStream(filePath, FileMode.Create))
+        //{
+        //    await file.CopyToAsync(stream);
+        //}
+
+        //Access the file stream directly (e.g., to upload to AWS S3, Azure Blob, or database)
+        using var stream = file.OpenReadStream();
+
+        // 2. Create the HttpClient instance
+        var client = httpClientFactory.CreateClient();
+
+        // 3. Prepare the multipart form data content
+        using var form = new MultipartFormDataContent();
+
+        // Open the stream of the incoming file
+        using var fileStream = file.OpenReadStream();
+        using var streamContent = new StreamContent(fileStream);
+
+        // Pass along the original Content-Type headers
+        streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+        // "file" is the parameter name the external API expects. 
+        // file.FileName ensures the external API knows the original file name.
+        form.Add(streamContent, "file", file.FileName);
+
+        // 4. Send POST request to the external/internal API
+        var url = configuration["EMMA-AI:EndPoint"];
+        var externalApiUrl = $"{url}/api/doc/ddt";
+        var response = await client.PostAsync(externalApiUrl, form);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            // 3. Deserializza la stringa nell'oggetto DatiBolla
+            DatiBolla? datiBolla = JsonSerializer.Deserialize<DatiBolla>(responseContent, options);
+
+            //TODO: Log the call and additional details like processing time, user info, etc.
+
+            return Results.Ok(datiBolla);
+        }
+        else
+        {
+            return Results.Problem($"Internal server error: {response.StatusCode}");
+        }
+    }
+    catch (Exception ex)
+    {
+        // Log the exception in real production code
+        return Results.Problem($"Internal server error: {ex.Message}");
+    }
+})
+.WithName("dtt")
+.DisableAntiforgery(); // FONDAMENTALE per client desktop come Avalonia
+
+/// Aggiunge un nuovo utente
+app.MapPost("/api/users", async (User user, [FromKeyedServices] IUserService userService) =>
+    {
+        var id = await userService.AddUserAsync(user);
+        return Results.Ok(id);
+    })
+    .WithName("AddUser");
+
+/// Recupera un utente per ID
+app.MapGet("/api/users/{id:int}", async (int id, [FromKeyedServices] IUserService userService) =>
+    {
+        var user = await userService.GetUserAsync(id);
+
+        // Gestiamo anche il caso in cui l'utente non esista
+        return user is not null
+            ? Results.Ok(user)
+            : Results.NotFound($"Utente con ID {id} non trovato.");
+    })
+    .WithName("GetUserById");
+
+
+
+app.Run();
+

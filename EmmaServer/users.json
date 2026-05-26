@@ -1,0 +1,12 @@
+[
+  {
+    "username": "marco@emma.it",
+    "passwordHash": "xyz",
+    "databaseName": "emma"
+  },
+  {
+    "username": "luigi@emma.it",
+    "passwordHash": "segreto123",
+    "databaseName": "emma_luigi"
+  }
+]
