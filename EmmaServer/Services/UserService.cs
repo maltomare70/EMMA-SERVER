@@ -5,24 +5,24 @@ namespace EmmaServer.Services;
 
 public interface IUserService
 {
-    Task<User?> GetUserAsync(int id);
-    Task<int?> AddUserAsync(User user);
+    Task<EmmaUser?> GetUserAsync(int id);
+    Task<int?> AddUserAsync(EmmaUser user);
 }
 
 public class UserService : IUserService
 {
-    private readonly IRepositoryGenerico<User> _repo;
+    private readonly IRepositoryGenerico<EmmaUser> _repo;
 
-    public UserService(IRepositoryGenerico<User> repo)
+    public UserService(IRepositoryGenerico<EmmaUser> repo)
     {
         _repo = repo;
     }
-    public async Task<int?> AddUserAsync(User user)
+    public async Task<int?> AddUserAsync(EmmaUser user)
     {
         return await _repo.AddAsync(user);
     }
     
-    public async Task<User?> GetUserAsync(int id)
+    public async Task<EmmaUser?> GetUserAsync(int id)
     {
         return await _repo.GetIdAsync(id);
     }

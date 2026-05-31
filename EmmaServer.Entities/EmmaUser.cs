@@ -5,7 +5,7 @@ namespace EmmaServer.Entities;
 
 // Specifichiamo il nome esatto della tabella su Postgres
 [Table("users")] 
-public record User : IEntity
+public record EmmaUser : IEntity
 {
     [Dapper.Contrib.Extensions.Key]
     public int id { get; init; }

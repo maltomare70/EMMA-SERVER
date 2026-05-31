@@ -8,7 +8,7 @@ using Npgsql;
 using System.Data;
 using System.Net.Http.Headers;
 using System.Text.Json;
-
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,10 +64,16 @@ app.UseAuthorization();
 
 
 /// Endpoint per l'upload del file PDF e l'inoltro a un'API esterna
-app.MapPost("/api/doc/ddt", async (IFormFile file, [FromServices] IHttpClientFactory httpClientFactory, [FromServices] IConfiguration configuration) =>
+app.MapPost("/api/v1/doc/ddt", async (IFormFile file, 
+        [FromServices] IHttpClientFactory httpClientFactory, 
+        [FromServices] IConfiguration configuration, ClaimsPrincipal user) =>
 {
+     if (user.Identity == null || !user.Identity.IsAuthenticated)
+     {
+         return Results.BadRequest("Utente non autorizzato");
+     }
     // 1. Validate that a file was actually uploaded
-    if (file == null || file.Length == 0) return Results.BadRequest("No file was uploaded.");
+    if (file.Length == 0) return Results.BadRequest("No file was uploaded.");
 
     // 2. Validate that the file is a PDF
     var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
@@ -110,12 +116,23 @@ app.MapPost("/api/doc/ddt", async (IFormFile file, [FromServices] IHttpClientFac
         // "file" is the parameter name the external API expects. 
         // file.FileName ensures the external API knows the original file name.
         form.Add(streamContent, "file", file.FileName);
-
+        
         // 4. Send POST request to the external/internal API
-        var url = configuration["EMMA-AI:EndPoint"];
-        var externalApiUrl = $"{url}/api/doc/ddt";
-        var response = await client.PostAsync(externalApiUrl, form);
+        var url = configuration["EMMA-AI:EndPoint"]; //https://emma-aegc.onrender.com",
+        var externalApiUrl = $"{url}/api/v1/doc/ddt";
+        
+        using var request = new HttpRequestMessage(HttpMethod.Post, externalApiUrl);
+        request.Content = form;
 
+        // ADD YOUR HEADERS HERE
+        var model = configuration["EMMA-AI:Model"];
+        request.Headers.Add("x-model", model); 
+        var apiKey = configuration["EMMA-AI:ApiKey"];
+        request.Headers.Add("X-API-Key", apiKey);
+        
+        //var response = await client.PostAsync(externalApiUrl, form);
+        var response = await client.SendAsync(request);
+        
         if (response.IsSuccessStatusCode)
         {
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -125,11 +142,11 @@ app.MapPost("/api/doc/ddt", async (IFormFile file, [FromServices] IHttpClientFac
             };
 
             // 3. Deserializza la stringa nell'oggetto DatiBolla
-            DatiBolla? datiBolla = JsonSerializer.Deserialize<DatiBolla>(responseContent, options);
+            DdtResponse? ddtResponse = JsonSerializer.Deserialize<DdtResponse>(responseContent, options);
 
             //TODO: Log the call and additional details like processing time, user info, etc.
 
-            return Results.Ok(datiBolla);
+            return Results.Ok(ddtResponse);
         }
         else
         {
@@ -146,7 +163,7 @@ app.MapPost("/api/doc/ddt", async (IFormFile file, [FromServices] IHttpClientFac
 .DisableAntiforgery(); // FONDAMENTALE per client desktop come Avalonia
 
 /// Aggiunge un nuovo utente
-app.MapPost("/api/users", async (User user, [FromKeyedServices] IUserService userService) =>
+app.MapPost("/api/users", async (EmmaUser user, [FromKeyedServices] IUserService userService) =>
     {
         var id = await userService.AddUserAsync(user);
         return Results.Ok(id);
@@ -165,7 +182,7 @@ app.MapGet("/api/users/{id:int}", async (int id, [FromKeyedServices] IUserServic
     })
     .WithName("GetUserById");
 
-
+app.MapGet("/", () => "Hello");
 
 app.Run();
 
