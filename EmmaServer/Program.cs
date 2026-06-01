@@ -9,8 +9,12 @@ using System.Data;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Security.Claims;
+using Dapper;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+SqlMapper.AddTypeHandler(new JsonDocumentTypeHandler());
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -22,6 +26,9 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserConnectionProvider, UserConnectionProvider>();
 builder.Services.AddScoped(typeof(IRepositoryGenerico<>), typeof(RepositoryGenerico<>));
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<IBolleService, BolleService>();
+builder.Services.AddScoped<IBolleRepository, BolleRepository>();
 
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 
@@ -63,10 +70,48 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 
+app.MapGet("/api/v1/doc/ddt", async ([FromQuery] string fornitore, 
+        [FromServices] IBolleService bolleService) =>
+    {
+        if (string.IsNullOrWhiteSpace(fornitore))
+        {
+            return Results.BadRequest("Il parametro 'fornitore' è obbligatorio.");
+        }
+        
+        var bolle = await bolleService.GetBolleByFornitore(fornitore);
+
+        // Gestiamo anche il caso in cui l'utente non esista
+        return bolle is not null
+            ? Results.Ok(bolle)
+            : Results.NotFound($"Bolle del {fornitore} non trovate.");
+    })
+    .WithName("GetBolleByFornitore");
+
+
+async Task<byte[]> ConvertFormFileToByteArray(IFormFile file)
+{
+    // 1. Controllo di sicurezza: verifichiamo che il file non sia vuoto
+    if (file == null || file.Length == 0)
+    {
+        return Array.Empty<byte>(); // Oppure gestisci l'errore come preferisci
+    }
+
+    // 2. Usiamo un MemoryStream per leggere il contenuto del file
+    using var memoryStream = new MemoryStream();
+    
+    // 3. Copiamo asincronamente lo stream del file nel MemoryStream
+    await file.CopyToAsync(memoryStream);
+
+    // 4. Trasformiamo il MemoryStream in un array di byte
+    return memoryStream.ToArray();
+}
+
 /// Endpoint per l'upload del file PDF e l'inoltro a un'API esterna
 app.MapPost("/api/v1/doc/ddt", async (IFormFile file, 
         [FromServices] IHttpClientFactory httpClientFactory, 
-        [FromServices] IConfiguration configuration, ClaimsPrincipal user) =>
+        [FromServices] IConfiguration configuration,
+        [FromServices] IBolleService bolleService,
+        ClaimsPrincipal user) =>
 {
      if (user.Identity == null || !user.Identity.IsAuthenticated)
      {
@@ -83,6 +128,8 @@ app.MapPost("/api/v1/doc/ddt", async (IFormFile file,
     }
     try
     {
+
+        var file_byte = await ConvertFormFileToByteArray(file);
         //// Example A: Save the file to a local directory
         //var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
         //if (!Directory.Exists(uploadsFolder))
@@ -144,7 +191,14 @@ app.MapPost("/api/v1/doc/ddt", async (IFormFile file,
             // 3. Deserializza la stringa nell'oggetto DatiBolla
             DdtResponse? ddtResponse = JsonSerializer.Deserialize<DdtResponse>(responseContent, options);
 
-            //TODO: Log the call and additional details like processing time, user info, etc.
+            //Salvo sul database
+            if (ddtResponse is not null)
+            {
+                await bolleService.AddBollaAsync(ddtResponse.Document.Mittente, 
+                    ddtResponse.Document.NumeroBolla, 
+                    ddtResponse.Document.DataBolla, responseContent,
+                    ddtResponse.FileName ?? string.Empty, file_byte);
+            }
 
             return Results.Ok(ddtResponse);
         }
