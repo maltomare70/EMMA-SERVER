@@ -11,7 +11,7 @@ public interface IBolleService
     Task<List<Bolle?>> GetBolleByFornitore(string fornitore);
     Task<Bolle?> GetBollaAsync(string fornitore, string numeroBolla, string dataBolla);
     Task<bool?> DeleteAsync(Bolle bolla);
-    Task AddBollaAsync(string fornitore, string numero_bolla, string data_bolla, string json, string fileName, byte[] file_byte);
+    Task<int?> AddBollaAsync(string fornitore, string numero_bolla, string data_bolla, string json, string fileName, byte[] file_byte);
 }
 
 public class BolleService : IBolleService
@@ -43,12 +43,12 @@ public class BolleService : IBolleService
         return await _repo.GetBollaAsync( fornitore,  numeroBolla,  dataBolla);
     }
     
-    public async Task AddBollaAsync(string fornitore, string numero_bolla, string data_bolla, string json, string fileName, byte[] file_byte)
+    public async Task<int?> AddBollaAsync(string fornitore, string numero_bolla, string data_bolla, string json, string fileName, byte[] file_byte)
     {
         var bolla = await GetBollaAsync(fornitore, numero_bolla,  data_bolla);
         if (bolla is not null) await DeleteAsync(bolla);
         //inserisco
-        await AddAsync((new Bolle()
+        return await AddAsync((new Bolle()
         {
             file_name = fileName,
             data = JsonDocument.Parse(json),

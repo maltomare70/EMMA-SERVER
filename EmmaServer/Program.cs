@@ -30,6 +30,14 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBolleService, BolleService>();
 builder.Services.AddScoped<IBolleRepository, BolleRepository>();
 
+builder.Services.AddScoped<IBolleMasterRepository, BolleMasterRepository>();
+builder.Services.AddScoped<IBolleMasterService, BolleMasterService>();
+
+builder.Services.AddScoped<IBolleRowsRepository, BolleRowsRepository>();
+
+
+
+
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 
 // 1. Registra la connessione al DB (o il tuo IUserConnectionProvider dinamico)
@@ -69,7 +77,9 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-
+// Per acquisire tutte le bolle di un fornitore
+// richiede filtri aggiuntivi per essere utilizzata
+// tutte le aperte... ad una certa data ...
 app.MapGet("/api/v1/doc/ddt", async ([FromQuery] string fornitore, 
         [FromServices] IBolleService bolleService) =>
     {
@@ -79,8 +89,7 @@ app.MapGet("/api/v1/doc/ddt", async ([FromQuery] string fornitore,
         }
         
         var bolle = await bolleService.GetBolleByFornitore(fornitore);
-
-        // Gestiamo anche il caso in cui l'utente non esista
+        
         return bolle is not null
             ? Results.Ok(bolle)
             : Results.NotFound($"Bolle del {fornitore} non trovate.");
@@ -88,23 +97,6 @@ app.MapGet("/api/v1/doc/ddt", async ([FromQuery] string fornitore,
     .WithName("GetBolleByFornitore");
 
 
-async Task<byte[]> ConvertFormFileToByteArray(IFormFile file)
-{
-    // 1. Controllo di sicurezza: verifichiamo che il file non sia vuoto
-    if (file == null || file.Length == 0)
-    {
-        return Array.Empty<byte>(); // Oppure gestisci l'errore come preferisci
-    }
-
-    // 2. Usiamo un MemoryStream per leggere il contenuto del file
-    using var memoryStream = new MemoryStream();
-    
-    // 3. Copiamo asincronamente lo stream del file nel MemoryStream
-    await file.CopyToAsync(memoryStream);
-
-    // 4. Trasformiamo il MemoryStream in un array di byte
-    return memoryStream.ToArray();
-}
 
 /// Endpoint per l'upload del file PDF e l'inoltro a un'API esterna
 app.MapPost("/api/v1/doc/ddt", async (IFormFile file, 
@@ -128,22 +120,8 @@ app.MapPost("/api/v1/doc/ddt", async (IFormFile file,
     }
     try
     {
-
-        var file_byte = await ConvertFormFileToByteArray(file);
-        //// Example A: Save the file to a local directory
-        //var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
-        //if (!Directory.Exists(uploadsFolder))
-        //{
-        //    Directory.CreateDirectory(uploadsFolder);
-        //}
-
-        //var filePath = Path.Combine(uploadsFolder, file.FileName);
-
-        //using (var stream = new FileStream(filePath, FileMode.Create))
-        //{
-        //    await file.CopyToAsync(stream);
-        //}
-
+        var file_byte = await FileHelper.ConvertFormFileToByteArray(file);
+        
         //Access the file stream directly (e.g., to upload to AWS S3, Azure Blob, or database)
         using var stream = file.OpenReadStream();
 
@@ -183,18 +161,14 @@ app.MapPost("/api/v1/doc/ddt", async (IFormFile file,
         if (response.IsSuccessStatusCode)
         {
             var responseContent = await response.Content.ReadAsStringAsync();
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
             // 3. Deserializza la stringa nell'oggetto DatiBolla
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             DdtResponse? ddtResponse = JsonSerializer.Deserialize<DdtResponse>(responseContent, options);
 
             //Salvo sul database
             if (ddtResponse is not null)
             {
-                await bolleService.AddBollaAsync(ddtResponse.Document.Mittente, 
+                int? id = await bolleService.AddBollaAsync(ddtResponse.Document.Mittente, 
                     ddtResponse.Document.NumeroBolla, 
                     ddtResponse.Document.DataBolla, responseContent,
                     ddtResponse.FileName ?? string.Empty, file_byte);
@@ -216,8 +190,31 @@ app.MapPost("/api/v1/doc/ddt", async (IFormFile file,
 .WithName("dtt")
 .DisableAntiforgery(); // FONDAMENTALE per client desktop come Avalonia
 
+
+//Aggiunge le righe del DDt nell tabella per la conciliazione
+app.MapPost("/api/v1/doc/ddt/add-rows", async ([FromBody] DatiBolla dati_bolla, 
+        [FromServices] IBolleMasterService bolleMasterService, 
+        [FromServices] IBolleService bolleService) =>
+    {
+        var bolla = await bolleService.GetBollaAsync(dati_bolla.Mittente, 
+            dati_bolla.NumeroBolla,  
+            dati_bolla.DataBolla);
+        await bolleMasterService.AddAsync(bolla.id, dati_bolla);
+        return Results.Ok();
+    })
+    .WithName("AddDdtRows");
+
+//Delete Master/Rrows
+app.MapDelete ("/api/v1/doc/ddt", async([FromBody] BolleMaster bolleMaster,  
+        [FromServices] IBolleMasterService bolleMasterService) =>
+{
+    await bolleMasterService.DeleteAsync(bolleMaster);
+    return Results.Ok();
+})
+.WithName("DeleteDdt");
+
 /// Aggiunge un nuovo utente
-app.MapPost("/api/users", async (EmmaUser user, [FromKeyedServices] IUserService userService) =>
+app.MapPost("/api/users", async (EmmaUser user, [FromServices] IUserService userService) =>
     {
         var id = await userService.AddUserAsync(user);
         return Results.Ok(id);
@@ -225,7 +222,7 @@ app.MapPost("/api/users", async (EmmaUser user, [FromKeyedServices] IUserService
     .WithName("AddUser");
 
 /// Recupera un utente per ID
-app.MapGet("/api/users/{id:int}", async (int id, [FromKeyedServices] IUserService userService) =>
+app.MapGet("/api/users/{id:int}", async (int id, [FromServices] IUserService userService) =>
     {
         var user = await userService.GetUserAsync(id);
 
@@ -236,6 +233,7 @@ app.MapGet("/api/users/{id:int}", async (int id, [FromKeyedServices] IUserServic
     })
     .WithName("GetUserById");
 
+//Test
 app.MapGet("/", () => "Hello");
 
 app.Run();
