@@ -13,14 +13,13 @@ public class BolleMasterService : IBolleMasterService
 {
     private readonly  IRepositoryGenerico<BolleMaster>  _bolleMasterRepository; 
     private readonly  IRepositoryGenerico<BolleRows>  _bolleRowsRepository;
-    private readonly IBolleRowsRepository _rowsRepository;
+
     
     public BolleMasterService(IRepositoryGenerico<BolleMaster> bolleMasterRepository,
-        IRepositoryGenerico<BolleRows> bolleRowsRepository, IBolleRowsRepository rowsRepository)
+        IRepositoryGenerico<BolleRows> bolleRowsRepository)
     {
         _bolleMasterRepository =  bolleMasterRepository;
         _bolleRowsRepository = bolleRowsRepository;
-        _rowsRepository = rowsRepository;
     }
 
     public async Task<int?> AddAsync(int id, DatiBolla dati_bolla)
@@ -59,15 +58,14 @@ public class BolleMasterService : IBolleMasterService
         }
         catch (Exception e)
         {
-            await _rowsRepository.DeleteRowsByMaster(id_master.Value);
+            var master = await _bolleMasterRepository.GetIdAsync(id_master.Value);
+            await _bolleMasterRepository.DeleteAsync(master);
             throw;
         }
     }
 
     public async Task DeleteAsync(BolleMaster bolleMaster)
     {
-        await _rowsRepository.DeleteRowsByMaster(bolleMaster.id);
-
         await _bolleMasterRepository.DeleteAsync(bolleMaster);
     }
 }
