@@ -4,13 +4,15 @@ using Dapper.Contrib.Extensions;
 namespace EmmaServer.Entities;
 
 // Specifichiamo il nome esatto della tabella su Postgres
-[Table("customer")] 
-public record Customer : IEntity
+[Table("tenants")] 
+public record EmmaTenant: IEntity
 {
     [Dapper.Contrib.Extensions.Key]
     public int id { get; init; }
-    public string name { get; init; } = string.Empty;
+    [Required]
+    public string codice { get; init; } = string.Empty;
+    [Required]
+    public string descrizione { get; init; }
     [Write(false)] 
     public DateTime data_creazione { get; init; }
-
 }

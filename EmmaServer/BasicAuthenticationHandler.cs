@@ -61,7 +61,8 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
             // Se valido, creiamo l'identità dell'utente
             var claims = new[] { 
                 new Claim(ClaimTypes.Name, username),
-                new Claim("database_name", result.DatabaseName)
+                new Claim("database_name", result.DatabaseName),
+                new Claim("tenant", result.Tenant)
             };
             
             var identity = new ClaimsIdentity(claims, Scheme.Name);

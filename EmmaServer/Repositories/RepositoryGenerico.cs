@@ -1,10 +1,10 @@
-using System;
-using System.Collections.Generic;
+
 using System.Data;
-using System.Threading.Tasks;
 using Dapper.Contrib.Extensions;
 using Npgsql;
 using EmmaServer.Entities;
+using Dapper;
+using System.Reflection;
 
 namespace EmmaServer.Repositories;
 
@@ -14,20 +14,22 @@ public interface IRepositoryGenerico<T> where T : class, IEntity
     Task<int> AddAsync(T entita);
     Task<T?> GetIdAsync(int id);
     Task<IEnumerable<T>> GetAllAsync();
+    Task<IEnumerable<T>> GetAllTenantAsync();
     Task<bool> UpdateAsync(T entita);
     Task<bool> DeleteAsync(T entita);
 }
 
 public class RepositoryGenerico<T> : IRepositoryGenerico<T> where T : class, IEntity
 {
-    private readonly string _connectionString;
+    private readonly string? _connectionString;
 
     private readonly IUserConnectionProvider _connectionProvider;
-    
+    private readonly string? _tenant;
     public RepositoryGenerico(IUserConnectionProvider connectionProvider)
     {
         //_connectionString = "Host=localhost:5432;Username=marco;Password=malt0mare;Database=nome_db";
         _connectionProvider = connectionProvider;
+        _tenant = _connectionProvider.GetTenant();
         
         // Chicca: Questo dice a Dapper di mappare automaticamente 
         // le proprietà PascalCase (C#) con le colonne snake_case (Postgres)
@@ -61,6 +63,20 @@ public class RepositoryGenerico<T> : IRepositoryGenerico<T> where T : class, IEn
     {
         using var db = CreaConnessione();
         return await db.GetAllAsync<T>();
+    }
+    
+    public async Task<IEnumerable<T>> GetAllTenantAsync()
+    {
+        using var db = CreaConnessione();
+
+        // Recupera dinamicamente il nome della tabella dall'attributo [Table("...")]
+        var tableAttr = typeof(T).GetCustomAttribute<TableAttribute>();
+        string tableName = tableAttr != null ? tableAttr.Name : typeof(T).Name;
+
+        // Query sicura parametrizzata
+        string query = $"SELECT * FROM {tableName} WHERE tenant = @tenant";
+
+        return await db.QueryAsync<T>(query, new { tenant = _tenant });
     }
 
     // UPDATE

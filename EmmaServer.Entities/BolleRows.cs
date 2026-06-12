@@ -8,7 +8,7 @@ public record BolleRows: IEntity
     [Dapper.Contrib.Extensions.Key]
     public int id { get; init; }
     [Write(false)] 
-    public DateTime created_at { get; init; }
+    public DateTime data_creazione { get; init; }
     public int id_bolla { get; init; }
     public string codice { get; set; }
     public string descrizione { get; set; }

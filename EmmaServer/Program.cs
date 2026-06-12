@@ -26,6 +26,9 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserConnectionProvider, UserConnectionProvider>();
 builder.Services.AddScoped(typeof(IRepositoryGenerico<>), typeof(RepositoryGenerico<>));
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+builder.Services.AddScoped<ITenantService, TenantService>();
 
 builder.Services.AddScoped<IBolleService, BolleService>();
 builder.Services.AddScoped<IBolleRepository, BolleRepository>();
@@ -35,7 +38,8 @@ builder.Services.AddScoped<IBolleMasterService, BolleMasterService>();
 
 builder.Services.AddScoped<IBolleRowsRepository, BolleRowsRepository>();
 
-
+builder.Services.AddScoped<IDocRepository, DocRepository>();
+builder.Services.AddScoped<IDocService, DocService>();
 
 
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
@@ -44,7 +48,7 @@ builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IDbConnection>(sp => new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 2. Registra il validatore specifico per l'interfaccia generica
-builder.Services.AddScoped<IBasicAuthValidator, JsonFileAuthValidator>();
+builder.Services.AddScoped<IBasicAuthValidator, DatabaseAuthValidator>();
 
 // 3. Registra l'autenticazione Basic (che troverà automaticamente IBasicAuthValidator)
 builder.Services.AddAuthentication("BasicAuthentication")
@@ -74,41 +78,45 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Per acquisire tutte le bolle di un fornitore
 // richiede filtri aggiuntivi per essere utilizzata
 // tutte le aperte... ad una certa data ...
-app.MapGet("/api/v1/doc/ddt", async ([FromQuery] string fornitore, 
-        [FromServices] IBolleService bolleService) =>
+app.MapGet("/api/v1/doc", async ([FromQuery] string fornitore, 
+        [FromServices] IDocService docService) =>
     {
         if (string.IsNullOrWhiteSpace(fornitore))
         {
             return Results.BadRequest("Il parametro 'fornitore' è obbligatorio.");
         }
         
-        var bolle = await bolleService.GetBolleByFornitore(fornitore);
+        var docs = await docService.GetDocByFornitore(fornitore);
         
-        return bolle is not null
-            ? Results.Ok(bolle)
-            : Results.NotFound($"Bolle del {fornitore} non trovate.");
+        return docs is not null
+            ? Results.Ok(docs)
+            : Results.NotFound($"Doc del {fornitore} non trovate.");
     })
-    .WithName("GetBolleByFornitore");
+    .WithName("GetDocByFornitore");
 
 
 
 /// Endpoint per l'upload del file PDF e l'inoltro a un'API esterna
-app.MapPost("/api/v1/doc/ddt", async (IFormFile file, 
+app.MapPost("/api/v1/doc", async (IFormFile file, 
         [FromServices] IHttpClientFactory httpClientFactory, 
         [FromServices] IConfiguration configuration,
-        [FromServices] IBolleService bolleService,
+        [FromServices] IDocService docService,
         ClaimsPrincipal user) =>
 {
      if (user.Identity == null || !user.Identity.IsAuthenticated)
      {
          return Results.BadRequest("Utente non autorizzato");
      }
+
+     string tenant = user.FindFirstValue("tenant");
+     
     // 1. Validate that a file was actually uploaded
     if (file.Length == 0) return Results.BadRequest("No file was uploaded.");
 
@@ -168,10 +176,10 @@ app.MapPost("/api/v1/doc/ddt", async (IFormFile file,
             //Salvo sul database
             if (ddtResponse is not null)
             {
-                int? id = await bolleService.AddBollaAsync(ddtResponse.Document.Mittente, 
+                int? id = await docService.AddDocAsync(ddtResponse.Document.Mittente, 
                     ddtResponse.Document.NumeroBolla, 
                     ddtResponse.Document.DataBolla, responseContent,
-                    ddtResponse.FileName ?? string.Empty, file_byte);
+                    ddtResponse.FileName ?? string.Empty, file_byte, tenant);
             }
 
             return Results.Ok(ddtResponse);
@@ -187,31 +195,67 @@ app.MapPost("/api/v1/doc/ddt", async (IFormFile file,
         return Results.Problem($"Internal server error: {ex.Message}");
     }
 })
-.WithName("dtt")
+.WithName("doc")
 .DisableAntiforgery(); // FONDAMENTALE per client desktop come Avalonia
 
 
-//Aggiunge le righe del DDt nell tabella per la conciliazione
-app.MapPost("/api/v1/doc/ddt/add-rows", async ([FromBody] DatiBolla dati_bolla, 
-        [FromServices] IBolleMasterService bolleMasterService, 
-        [FromServices] IBolleService bolleService) =>
-    {
-        var bolla = await bolleService.GetBollaAsync(dati_bolla.Mittente, 
-            dati_bolla.NumeroBolla,  
-            dati_bolla.DataBolla);
-        await bolleMasterService.AddAsync(bolla.id, dati_bolla);
-        return Results.Ok();
-    })
-    .WithName("AddDdtRows");
+// //Aggiunge le righe del DDt nell tabella per la conciliazione
+// app.MapPost("/api/v1/doc/ddt/add-rows", async ([FromBody] DatiBolla dati_bolla, 
+//         [FromServices] IBolleMasterService bolleMasterService, 
+//         [FromServices] IBolleService bolleService) =>
+//     {
+//         var bolla = await bolleService.GetBollaAsync(dati_bolla.Mittente, 
+//             dati_bolla.NumeroBolla,  
+//             dati_bolla.DataBolla);
+//         await bolleMasterService.AddAsync(bolla.id, dati_bolla);
+//         return Results.Ok();
+//     })
+//     .WithName("AddDdtRows");
 
-//Delete Master/Rrows
-app.MapDelete ("/api/v1/doc/ddt", async([FromBody] BolleMaster bolleMaster,  
-        [FromServices] IBolleMasterService bolleMasterService) =>
-{
-    await bolleMasterService.DeleteAsync(bolleMaster);
-    return Results.Ok();
-})
-.WithName("DeleteDdt");
+// //Delete Master/Rrows
+// app.MapDelete ("/api/v1/doc/ddt", async([FromBody] BolleMaster bolleMaster,  
+//         [FromServices] IBolleMasterService bolleMasterService) =>
+// {
+//     await bolleMasterService.DeleteAsync(bolleMaster);
+//     return Results.Ok();
+// })
+// .WithName("DeleteDdt");
+
+
+/// Aggiunge un nuovo tenant
+app.MapPost("/api/tenants", async (EmmaTenant tenant, [FromServices] ITenantService tenantService) =>
+    {
+        var id = await tenantService.AddTenantAsync(tenant);
+        return Results.Ok(id);
+    })
+    .WithName("AddTenant");
+
+app.MapGet("/api/tenants", async ([FromServices] ITenantService tenantService) =>
+    {
+        var tenants = await tenantService.GetAllAsync();
+        return Results.Ok(tenants);
+    })
+    .WithName("GetTenants");
+
+
+/// Recupera un tenants per ID
+app.MapGet("/api/tenants/{id:int}", async (int id, [FromServices] ITenantService tenantService) =>
+    {
+        var tenant = await tenantService.GetTenantAsync(id);
+
+        // Gestiamo anche il caso in cui l'utente non esista
+        return tenant is not null
+            ? Results.Ok(tenant)
+            : Results.NotFound($"tenants con ID {id} non trovato.");
+    })
+    .WithName("GetTenantById");
+
+app.MapPut("/api/tenants", async (EmmaTenant tenant, [FromServices] ITenantService tenantService) =>
+    {
+        var id = await tenantService.UpdateTenantAsync(tenant);
+        return Results.Ok(id);
+    })
+    .WithName("UpdateTenant");
 
 /// Aggiunge un nuovo utente
 app.MapPost("/api/users", async (EmmaUser user, [FromServices] IUserService userService) =>
@@ -220,6 +264,20 @@ app.MapPost("/api/users", async (EmmaUser user, [FromServices] IUserService user
         return Results.Ok(id);
     })
     .WithName("AddUser");
+
+app.MapPut("/api/users", async (EmmaUser user, [FromServices] IUserService userService) =>
+    {
+        var id = await userService.UpdateUserAsync(user);
+        return Results.Ok(id);
+    })
+    .WithName("UpdateUser");
+
+app.MapGet("/api/users", async ([FromServices] IUserService userService) =>
+    {
+        var users = await userService.GetAllTenantAsync();
+        return Results.Ok(users);
+    })
+    .WithName("GetUsers");
 
 /// Recupera un utente per ID
 app.MapGet("/api/users/{id:int}", async (int id, [FromServices] IUserService userService) =>
@@ -233,8 +291,22 @@ app.MapGet("/api/users/{id:int}", async (int id, [FromServices] IUserService use
     })
     .WithName("GetUserById");
 
+app.MapGet("/api/users/email/{email}", async (string email, [FromServices] IUserService userService) =>
+    {
+        var user = await userService.GetUserByEmailAsync(email);
+
+        // Gestiamo anche il caso in cui l'utente non esista
+        return user is not null
+            ? Results.Ok(user)
+            : Results.NotFound($"Utente con email {email} non trovato.");
+    })
+    .WithName("GetUserByEmail");
+
 //Test
 app.MapGet("/", () => "Hello");
+
+//Auth
+app.MapGet("/api/auth", () => "OK");
 
 app.Run();
 

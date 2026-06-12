@@ -13,6 +13,6 @@ public record EmmaUser : IEntity
     [Required]
     public string pwd { get; init; }
     [Write(false)] 
-    public DateTime created_at { get; init; }
-
+    public DateTime data_creazione { get; init; }
+    public string tenant { get; set; }
 }

@@ -2,14 +2,15 @@ using Dapper.Contrib.Extensions;
 using System.Text.Json;
 namespace EmmaServer.Entities;
 
-[Table("bolle")] 
-public record Bolle: IEntity
+[Table("docs")] 
+public record EmmaDoc: IEntity
 {
     [Dapper.Contrib.Extensions.Key]
     public int id { get; init; }
     public string file_name { get; init; } = string.Empty;
     [Write(false)] 
     public DateTime data_creazione { get; init; }
-    public JsonDocument data { get; init; }
+    public JsonDocument content { get; init; }
     public byte[] allegato { get; set; }
+    public string tenant { get; set; }
 }

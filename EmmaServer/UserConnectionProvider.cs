@@ -6,6 +6,8 @@ using System.Security.Claims;
 public interface IUserConnectionProvider
 {
     string GetConnectionString();
+    string GetEmmaConnectionString();
+    string GetTenant();
 }
 
 public class UserConnectionProvider : IUserConnectionProvider
@@ -15,6 +17,11 @@ public class UserConnectionProvider : IUserConnectionProvider
     public UserConnectionProvider(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
+    }
+    
+    public string GetEmmaConnectionString()
+    {
+        return $"Host=localhost:5432;Username=marco;Password=malt0mare;Database=emma";
     }
 
     public string GetConnectionString()
@@ -33,5 +40,23 @@ public class UserConnectionProvider : IUserConnectionProvider
         }
         
         return $"Host=localhost:5432;Username=marco;Password=malt0mare;Database={datbaseName}";
+    }
+
+    public string GetTenant()
+    {
+        var context = _httpContextAccessor.HttpContext;
+        if (context == null)
+        {
+            throw new Exception("Contesto HTTP non disponibile.");
+        }
+        
+        var tenant = context.User.FindFirst("tenant")?.Value;
+
+        if (string.IsNullOrEmpty(tenant))
+        { 
+            throw new UnauthorizedAccessException("Impossibile determinare il tenant dell'utente.");
+        }
+
+        return tenant;
     }
 }

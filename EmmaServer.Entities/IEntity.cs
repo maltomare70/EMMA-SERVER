@@ -6,5 +6,5 @@ public interface IEntity
 {
     int id { get; init; }
     [Write(false)] 
-    public DateTime created_at { get; init; }
+    public DateTime data_creazione { get; init; }
 }
