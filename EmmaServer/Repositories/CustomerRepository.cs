@@ -25,7 +25,7 @@ public class CustomerRepository : RepositoryGenerico<Customer>, ICustomerReposit
         const string sql = "SELECT id, nome FROM customer WHERE nome = @Nome;";
 
         // Sfruttiamo il metodo del padre per ottenere la connessione al database del tenant corrente
-        using var db = CreaConnessione();
+        using var db = await CreaConnessione();
         
         // Eseguiamo una normale query Dapper (non Contrib)
         return await db.QueryAsync<Customer>(sql, new { Nome = nome });

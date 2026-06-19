@@ -16,7 +16,7 @@ public class BolleRowsRepository: RepositoryGenerico<BolleRows>, IBolleRowsRepos
 
     public async Task<IEnumerable<BolleRows>> GetRowsByMaster(int idMaster)
     {
-        using var db = CreaConnessione();
+        using var db = await CreaConnessione();
         
         const string sql = "SELECT * FROM bolle_rows WHERE id_bolla = @Id_Bolla;";
         

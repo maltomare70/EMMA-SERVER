@@ -25,7 +25,7 @@ public class BolleRepository: RepositoryGenerico<Bolle>, IBolleRepository
             Mittente = fornitore
         };
 
-        using var db = CreaConnessione();
+        using var db = await CreaConnessione();
         
         var risultati = await db.QueryAsync<Bolle>(sql, parametri);
         return risultati.ToList();
@@ -46,7 +46,7 @@ public class BolleRepository: RepositoryGenerico<Bolle>, IBolleRepository
             DataBolla = dataBolla,
         };
 
-        using var db = CreaConnessione();
+        using var db = await CreaConnessione();
         
         return await db.QueryFirstOrDefaultAsync<Bolle>(sql, parametri);
     }

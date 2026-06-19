@@ -2,6 +2,7 @@ using System.Data;
 using Npgsql;
 using EmmaServer.Entities;
 using Dapper;
+using EmmaServer.Helpers;
 
 
 
@@ -31,13 +32,13 @@ public class DatabaseAuthValidator: IBasicAuthValidator
             const string sql = "SELECT * FROM users WHERE email = @email;";
             var user = await db.QueryFirstAsync<EmmaUser>(sql, new { email = email });
             
-            if ( user is null) return new AuthValidationResult(false, null, null);
-                
-            if (user.pwd == password)
+            if ( user is null || string.IsNullOrWhiteSpace(user.pwd)) return new AuthValidationResult(false, null, null);
+
+        if (PasswordHelper.VerificaPassword(password, user.pwd!))
             {
                 if (string.IsNullOrWhiteSpace(user.tenant))  return new AuthValidationResult(false, null, null);
                 // Restituiamo successo e il nome del database associato!
-                return new AuthValidationResult(true, "emma", user.tenant);
+                return new AuthValidationResult(true, UserConnectionProvider.DATABASE_NAME, user.tenant);
             }
             return new AuthValidationResult(false, null, null);
     }

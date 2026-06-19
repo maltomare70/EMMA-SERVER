@@ -12,7 +12,7 @@ public record EmmaTenant: IEntity
     [Required]
     public string codice { get; init; } = string.Empty;
     [Required]
-    public string descrizione { get; init; }
+    public string? descrizione { get; init; } = string.Empty;
     [Write(false)] 
-    public DateTime data_creazione { get; init; }
+    public DateTime data_creazione { get; init; }= DateTime.UtcNow;
 }

@@ -18,14 +18,16 @@ public interface IBasicAuthValidator
 public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     private readonly IBasicAuthValidator _authValidator;
-
+    private readonly string? _adminPassword;
     public BasicAuthenticationHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        IBasicAuthValidator authValidator) : base(options, logger, encoder)
+        IBasicAuthValidator authValidator, IConfiguration configuration) : base(options, logger, encoder)
     {
         _authValidator = authValidator;
+
+        _adminPassword = configuration["Admin:Password"];
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -49,27 +51,46 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
             var username = credentials[0];
             var password = credentials[1];
 
-            // Utilizziamo il validatore generico iniettato (va cambiato)
-            //con l'utente e la password bisogna validare e restituire il nome del database dell'utente
-            //si deve usare un database con connessione statica o un altro sistema json file
-            var result = await _authValidator.ValidaCredenzialiAsync(username, password);
+            if (username.Equals("admin", StringComparison.InvariantCultureIgnoreCase) && password == _adminPassword)
+            {
+                // Se valido, creiamo l'identità dell'utente
+                var claims = new[] {
+                    new Claim(ClaimTypes.Name, username),
+                    new Claim("database_name", "emma"),
+                    new Claim("tenant", "emma")
+                };
 
-            bool isValid = result.IsValid;
-            
-            if (!isValid) return AuthenticateResult.Fail("Credenziali errate.");
+                var identity = new ClaimsIdentity(claims, Scheme.Name);
+                var principal = new ClaimsPrincipal(identity);
+                var ticket = new AuthenticationTicket(principal, Scheme.Name);
 
-            // Se valido, creiamo l'identità dell'utente
-            var claims = new[] { 
-                new Claim(ClaimTypes.Name, username),
-                new Claim("database_name", result.DatabaseName),
-                new Claim("tenant", result.Tenant)
-            };
-            
-            var identity = new ClaimsIdentity(claims, Scheme.Name);
-            var principal = new ClaimsPrincipal(identity);
-            var ticket = new AuthenticationTicket(principal, Scheme.Name);
+                return AuthenticateResult.Success(ticket);
 
-            return AuthenticateResult.Success(ticket);
+            }
+            else
+            {
+                // Utilizziamo il validatore generico iniettato (va cambiato)
+                //con l'utente e la password bisogna validare e restituire il nome del database dell'utente
+                //si deve usare un database con connessione statica o un altro sistema json file
+                var result = await _authValidator.ValidaCredenzialiAsync(username, password);
+
+                bool isValid = result.IsValid;
+
+                if (!isValid) return AuthenticateResult.Fail("Credenziali errate.");
+
+                // Se valido, creiamo l'identità dell'utente
+                var claims = new[] {
+                    new Claim(ClaimTypes.Name, username),
+                    new Claim("database_name", result.DatabaseName),
+                    new Claim("tenant", result.Tenant)
+                };
+
+                var identity = new ClaimsIdentity(claims, Scheme.Name);
+                var principal = new ClaimsPrincipal(identity);
+                var ticket = new AuthenticationTicket(principal, Scheme.Name);
+
+                return AuthenticateResult.Success(ticket);
+            }
         }
         catch (Exception ex)
         {

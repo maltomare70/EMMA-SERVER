@@ -22,7 +22,7 @@ public class UserRepository : RepositoryGenerico<EmmaUser>, IUserRepository
         const string sql = "SELECT * FROM users WHERE email = @email;";
 
         // Sfruttiamo il metodo del padre per ottenere la connessione al database del tenant corrente
-        using var db = CreaConnessione();
+        using var db = await CreaConnessione();
         
         // Eseguiamo una normale query Dapper (non Contrib)
         return await db.QueryFirstAsync<EmmaUser>(sql, new { email = email });

@@ -9,7 +9,7 @@ public record Bolle: IEntity
     public int id { get; init; }
     public string file_name { get; init; } = string.Empty;
     [Write(false)] 
-    public DateTime data_creazione { get; init; }
-    public JsonDocument data { get; init; }
-    public byte[] allegato { get; set; }
+    public DateTime data_creazione { get; init; } = DateTime.UtcNow;
+    public JsonDocument? data { get; init; }
+    public byte[]? allegato { get; set; } 
 }

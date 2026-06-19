@@ -41,6 +41,9 @@ builder.Services.AddScoped<IBolleRowsRepository, BolleRowsRepository>();
 builder.Services.AddScoped<IDocRepository, DocRepository>();
 builder.Services.AddScoped<IDocService, DocService>();
 
+builder.Services.AddScoped<IEmmaService, EmmaService>();
+builder.Services.AddScoped<IEmmaRepository, EmmaRepository>();
+
 
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 
@@ -86,8 +89,13 @@ app.UseAuthorization();
 // richiede filtri aggiuntivi per essere utilizzata
 // tutte le aperte... ad una certa data ...
 app.MapGet("/api/v1/doc", async ([FromQuery] string fornitore, 
-        [FromServices] IDocService docService) =>
+        [FromServices] IDocService docService, ClaimsPrincipal user) =>
     {
+        if (user.Identity == null || !user.Identity.IsAuthenticated)
+        {
+            return Results.BadRequest("Utente non autorizzato");
+        }
+
         if (string.IsNullOrWhiteSpace(fornitore))
         {
             return Results.BadRequest("Il parametro 'fornitore' è obbligatorio.");
@@ -222,16 +230,57 @@ app.MapPost("/api/v1/doc", async (IFormFile file,
 // .WithName("DeleteDdt");
 
 
-/// Aggiunge un nuovo tenant
-app.MapPost("/api/tenants", async (EmmaTenant tenant, [FromServices] ITenantService tenantService) =>
+/// Crea il database e la struttura dati
+app.MapPost("/api/init", async (HttpContext httpContext, [FromServices] IEmmaService emmaService) =>
+{
+
+    if (httpContext.User?.Identity?.IsAuthenticated != true)
     {
+        return Results.Unauthorized();
+    }
+
+    if (httpContext.User?.Identity?.Name?.ToLower() != "admin")
+    {
+        return Results.Unauthorized();
+    }
+
+
+    await emmaService.InitAsync();
+    return Results.Ok();
+})
+.WithName("Init");
+
+/// Aggiunge un nuovo tenant
+app.MapPost("/api/tenants", async (HttpContext httpContext, EmmaTenant tenant, [FromServices] ITenantService tenantService) =>
+    {
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (httpContext.User?.Identity?.Name?.ToLower() != "admin")
+        {
+            return Results.Unauthorized();
+        }
+
         var id = await tenantService.AddTenantAsync(tenant);
         return Results.Ok(id);
     })
     .WithName("AddTenant");
 
-app.MapGet("/api/tenants", async ([FromServices] ITenantService tenantService) =>
+/// Recupera tutti i tenants
+app.MapGet("/api/tenants", async (HttpContext httpContext, [FromServices] ITenantService tenantService) =>
     {
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (httpContext.User?.Identity?.Name?.ToLower() != "admin")
+        {
+            return Results.Unauthorized();
+        }
+
         var tenants = await tenantService.GetAllAsync();
         return Results.Ok(tenants);
     })
@@ -250,31 +299,74 @@ app.MapGet("/api/tenants/{id:int}", async (int id, [FromServices] ITenantService
     })
     .WithName("GetTenantById");
 
-app.MapPut("/api/tenants", async (EmmaTenant tenant, [FromServices] ITenantService tenantService) =>
+///Modifica di un Tenant
+app.MapPut("/api/tenants", async (HttpContext httpContext, EmmaTenant tenant, [FromServices] ITenantService tenantService) =>
     {
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (httpContext.User?.Identity?.Name?.ToLower() != "admin")
+        {
+            return Results.Unauthorized();
+        }
+
         var id = await tenantService.UpdateTenantAsync(tenant);
         return Results.Ok(id);
     })
     .WithName("UpdateTenant");
 
 /// Aggiunge un nuovo utente
-app.MapPost("/api/users", async (EmmaUser user, [FromServices] IUserService userService) =>
+app.MapPost("/api/users", async (HttpContext httpContext, EmmaUser user, [FromServices] IUserService userService) =>
     {
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (httpContext.User?.Identity?.Name?.ToLower() != "admin")
+        {
+            return Results.Unauthorized();
+        }
+
         var id = await userService.AddUserAsync(user);
         return Results.Ok(id);
     })
     .WithName("AddUser");
 
-app.MapPut("/api/users", async (EmmaUser user, [FromServices] IUserService userService) =>
+///Modifica un utente
+app.MapPut("/api/users", async (HttpContext httpContext, EmmaUser user, [FromServices] IUserService userService) =>
     {
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (httpContext.User?.Identity?.Name?.ToLower() != "admin")
+        {
+            return Results.Unauthorized();
+        }
+
         var id = await userService.UpdateUserAsync(user);
         return Results.Ok(id);
     })
     .WithName("UpdateUser");
 
-app.MapGet("/api/users", async ([FromServices] IUserService userService) =>
+//Recupera tutti gli utenti
+app.MapGet("/api/users", async (string tenant, HttpContext httpContext, [FromServices] IUserService userService) =>
     {
-        var users = await userService.GetAllTenantAsync();
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (httpContext.User?.Identity?.Name?.ToLower() != "admin")
+        {
+            return Results.Unauthorized();
+        }
+
+        var users = await userService.GetAllTenantAsync(tenant);
         return Results.Ok(users);
     })
     .WithName("GetUsers");
@@ -291,6 +383,7 @@ app.MapGet("/api/users/{id:int}", async (int id, [FromServices] IUserService use
     })
     .WithName("GetUserById");
 
+//Recupera un utente dall'email
 app.MapGet("/api/users/email/{email}", async (string email, [FromServices] IUserService userService) =>
     {
         var user = await userService.GetUserByEmailAsync(email);

@@ -32,7 +32,7 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
             Mittente = fornitore
         };
 
-        using var db = CreaConnessione();
+        using var db = await CreaConnessione();
         
         var risultati = await db.QueryAsync<EmmaDoc>(sql, parametri);
         return risultati.ToList();
@@ -53,7 +53,7 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
             DataBolla = dataDoc,
         };
 
-        using var db = CreaConnessione();
+        using var db = await CreaConnessione();
         
         return await db.QueryFirstOrDefaultAsync<EmmaDoc>(sql, parametri);
     }

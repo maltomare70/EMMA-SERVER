@@ -11,6 +11,6 @@ public record Customer : IEntity
     public int id { get; init; }
     public string name { get; init; } = string.Empty;
     [Write(false)] 
-    public DateTime data_creazione { get; init; }
+    public DateTime data_creazione { get; init; } = DateTime.UtcNow;
 
 }

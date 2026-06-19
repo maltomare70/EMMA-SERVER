@@ -9,10 +9,11 @@ public record EmmaUser : IEntity
 {
     [Dapper.Contrib.Extensions.Key]
     public int id { get; init; }
+    [Required]
     public string email { get; init; } = string.Empty;
     [Required]
-    public string pwd { get; init; }
+    public string? pwd { get; init; } = string.Empty;
     [Write(false)] 
-    public DateTime data_creazione { get; init; }
-    public string tenant { get; set; }
+    public DateTime data_creazione { get; init; } = DateTime.UtcNow;
+    public string? tenant { get; set; }
 }
