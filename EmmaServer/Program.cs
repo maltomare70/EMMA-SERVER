@@ -6,7 +6,9 @@ using Npgsql;
 using System.Data;
 using Dapper;
 using EmmaServer.Endpoints;
-
+using EmmaServer.Entities;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,8 +83,13 @@ app.UseAuthorization();
 //Test
 app.MapGet("/", () => "Hello");
 
-//Auth
-app.MapGet("/api/auth", () => "OK");
+app.MapPost("/api/v1/auth", (ClaimsPrincipal claims) =>
+    {
+        if (claims.Identity == null || !claims.Identity.IsAuthenticated) return  Results.Ok(new LoginResponse(false, ""));
+
+        return Results.Ok(new LoginResponse(true, ""));
+    })
+    .WithName("Auth");
 
 app.Run();
 
