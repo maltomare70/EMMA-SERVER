@@ -13,4 +13,5 @@ public record EmmaDoc: IEntity
     public JsonDocument? content { get; init; }
     public byte[]? allegato { get; set; }
     public string tenant { get; set; } = string.Empty;
+    public int stato { get; set; } = 0;
 }

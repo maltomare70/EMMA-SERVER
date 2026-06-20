@@ -6,7 +6,7 @@ using Npgsql;
 using System.Data;
 using System.Reflection;
 using System.Text;
-
+using System.Text.Json;
 
 
 namespace EmmaServer.Repositories;
@@ -95,7 +95,7 @@ public class EmmaRepository: IEmmaRepository
 
 
         if (tableName.ToLower() == "users")
-            sql +=  " CREATE UNIQUE INDEX users_email_idx ON public.users USING btree (email);";
+            sql +=  " CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON public.users USING btree (email);";
 
         using var db = await CreaConnessione();
         await db.ExecuteAsync(sql);
@@ -124,6 +124,7 @@ public class EmmaRepository: IEmmaRepository
             _ when underlyingType == typeof(decimal) => "NUMERIC",
             _ when underlyingType == typeof(double) => "DOUBLE PRECISION",
             _ when underlyingType == typeof(Guid) => "UUID",
+            _ when underlyingType == typeof(JsonDocument) => "JSONB",
             _ => "TEXT" // Tipo di fallback
         };
 

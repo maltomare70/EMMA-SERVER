@@ -72,6 +72,7 @@ app.UseHttpsRedirection();
 app.MapTenantRoutes();
 app.MapUserRoutes();
 app.MapDocRoutes();
+app.MapAdminRoutes();
 
 app.UseCors("AllowAll");
 app.UseAuthentication();

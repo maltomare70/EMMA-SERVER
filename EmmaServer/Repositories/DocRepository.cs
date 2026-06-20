@@ -24,7 +24,7 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
 
         var tenant = _connectionProvider.GetTenant();
             
-        string sql = @$"SELECT *  FROM docs 
+        string sql = @$"SELECT id, file_name, data_creazione, content, tenant, stato  FROM docs 
                     WHERE tenant = @Tenant AND content->'document'->>'mittente' = @Mittente;";
 
         var parametri = new {
@@ -41,7 +41,7 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
     public async Task<EmmaDoc?> GetDocAsync(string fornitore, string numeroDoc, string dataDoc)
     {
         string sql = @"
-            SELECT *
+            SELECT id, file_name, data_creazione, content, tenant, stato 
             FROM docs 
             WHERE content->'document'->>'mittente' = @Mittente
               AND content->'document'->>'numero_bolla' = @NumeroBolla

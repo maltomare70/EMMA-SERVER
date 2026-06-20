@@ -9,17 +9,6 @@ public static class TenantEndpoints
 {
     public static void MapTenantRoutes(this IEndpointRouteBuilder app)
     {
-        /// Crea il database e la struttura dati
-        app.MapPost("/api/init", async (ClaimsPrincipal claims,
-                [FromServices] IEmmaService emmaService) =>
-            {
-                if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                if (claims.Identity?.Name?.ToLower() != "admin") return Results.Unauthorized();
-                
-                await emmaService.InitAsync();
-                return Results.Ok();
-            })
-            .WithName("Init");
 
         /// Aggiunge un nuovo tenant
         app.MapPost("/api/tenants",

@@ -5,7 +5,6 @@ using System.Security.Claims;
 
 public interface IUserConnectionProvider
 {
-    string GetConnectionString();
     string GetConnectionStringPostresSQL();
     string GetEmmaConnectionString();
     string GetTenant();
@@ -13,43 +12,35 @@ public interface IUserConnectionProvider
 
 public class UserConnectionProvider : IUserConnectionProvider
 {
+    public const string DATABASE_MASTER = "postgres";
     public const string DATABASE_NAME = "emma";
-
+    
     private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public UserConnectionProvider(IHttpContextAccessor httpContextAccessor)
+    private readonly IConfiguration _configuration;
+    
+    public UserConnectionProvider(IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
     {
         _httpContextAccessor = httpContextAccessor;
+        _configuration =  configuration;
     }
     
     public string GetEmmaConnectionString()
     {
-        return $"Host=localhost:5432;Username=marco;Password=malt0mare;Database={DATABASE_NAME}";
+        var server = _configuration["Database:server"] ?? "localhost:5432";
+        var emma = _configuration["Database:Emma:Name"] ?? DATABASE_NAME;
+        var user = _configuration["Database:Emma:User"] ?? "emma";
+        var password = _configuration["Database:Emma:Password"] ?? "";
+        return $"Host={server};Username={user};Password={password};Database={emma}";
     }
     public string GetConnectionStringPostresSQL()
     {
-        return $"Host=localhost:5432;Username=postgres;Password=malt0mare;Database=postgres";
+        var server = _configuration["Database:server"] ?? "localhost:5432";
+        var postgres = _configuration["Database:Master:Name"] ?? DATABASE_MASTER;
+        var user = _configuration["Database:Master:User"] ?? "postgres";
+        var password = _configuration["Database:Master:Password"] ?? "";
+        return $"Host={server};Username={user};Password={password};Database={postgres}";
     }
-
-    public string GetConnectionString()
-    {
-        return GetEmmaConnectionString();
-
-        var context = _httpContextAccessor.HttpContext;
-        if (context == null)
-        {
-            throw new Exception("Contesto HTTP non disponibile.");
-        }
-        
-        var databaseName = context.User.FindFirst("database_name")?.Value;
-
-        if (string.IsNullOrEmpty(databaseName))
-        { 
-            throw new UnauthorizedAccessException("Impossibile determinare il database dell'utente.");
-        }
-        
-        return $"Host=localhost:5432;Username=marco;Password=malt0mare;Database={databaseName}";
-    }
+    
 
     public string GetTenant()
     {
