@@ -14,7 +14,7 @@ public class UserRepository : RepositoryGenerico<EmmaUser>, IUserRepository
 {
     public UserRepository(IUserConnectionProvider connectionProvider) : base(connectionProvider)
     {
-    }
+    }   
     
     public async Task<EmmaUser> GetByEmailAsync(string email)
     {

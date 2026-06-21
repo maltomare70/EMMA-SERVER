@@ -33,7 +33,9 @@ public class EmmaRepository: IEmmaRepository
         await CreateTableFromClassAsync<EmmaTenant>();
         await CreateTableFromClassAsync<EmmaUser>();
         await CreateTableFromClassAsync<EmmaDoc>();
+        await CreateTableFromClassAsync<EmmaFornitori>();
     }
+    
 
     private async Task<IDbConnection> CreaConnessionePostreSQL()
     {
@@ -125,6 +127,7 @@ public class EmmaRepository: IEmmaRepository
             _ when underlyingType == typeof(double) => "DOUBLE PRECISION",
             _ when underlyingType == typeof(Guid) => "UUID",
             _ when underlyingType == typeof(JsonDocument) => "JSONB",
+            _ when underlyingType == typeof(byte[]) => "BYTEA",
             _ => "TEXT" // Tipo di fallback
         };
 

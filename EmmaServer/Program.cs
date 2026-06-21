@@ -36,6 +36,8 @@ builder.Services.AddScoped<IDocService, DocService>();
 builder.Services.AddScoped<IEmmaService, EmmaService>();
 builder.Services.AddScoped<IEmmaRepository, EmmaRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<IFornitoriRepository, FornitoriRepository>();
+builder.Services.AddScoped<IFornitoriService, FornitoriService>();
 
 // 1. Registra la connessione al DB (o il tuo IUserConnectionProvider dinamico)
 builder.Services.AddScoped<IDbConnection>(sp => new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -75,6 +77,7 @@ app.MapTenantRoutes();
 app.MapUserRoutes();
 app.MapDocRoutes();
 app.MapAdminRoutes();
+app.MapFornitoreRoutes();
 
 app.UseCors("AllowAll");
 app.UseAuthentication();
