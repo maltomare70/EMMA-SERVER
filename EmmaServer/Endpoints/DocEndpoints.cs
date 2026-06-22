@@ -13,6 +13,15 @@ public static class DocEndpoints
     // Questo metodo accetta l'app e registra le rotte al suo interno
     public static void MapDocRoutes(this IEndpointRouteBuilder app)
     {
+        //una volta salvato il documento
+        //si caricano le anagrafiche Forniori e Articoli
+        app.MapPost("/api/v1/doc/anagrafiche", async (
+            [FromBody] int idDoc, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
+        {
+            await docService.AddOrUpdateFornitorieArticoli(idDoc);
+            Results.Ok();
+        } ).WithName("Anagrafiche");
+        
         // Per acquisire tutte le bolle di un fornitore
         // richiede filtri aggiuntivi per essere utilizzata
         // tutte le aperte... ad una certa data ...
@@ -97,15 +106,26 @@ public static class DocEndpoints
                     DdtResponse? ddtResponse = JsonSerializer.Deserialize<DdtResponse>(responseContent, options);
 
                     //Salvo sul database
+                    int? idDoc = 0;
                     if (ddtResponse is not null)
                     {
-                        int? id = await docService.AddDocAsync(ddtResponse.Document.Mittente, 
+                        idDoc = await docService.AddDocAsync(ddtResponse.Document.Mittente, 
                             ddtResponse.Document.NumeroBolla, 
                             ddtResponse.Document.DataBolla, responseContent,
                             ddtResponse.FileName ?? string.Empty, file_byte, tenant);
                     }
-
-                    return Results.Ok(ddtResponse);
+                    
+                    //--------------------------------------------------------
+                    //Aggiorna Anagrafiche
+                    //--------------------------------------------------------
+                   await AggiornaAnagrafiche(docService,  idDoc.Value);
+                   //--------------------------------------------------------
+                   
+                    return Results.Ok(new DocResponse()
+                    {
+                        DocId = idDoc.Value,
+                        DdtResponse =  ddtResponse,
+                    });
                 }
                 else
                 {
@@ -120,6 +140,19 @@ public static class DocEndpoints
         })
         .WithName("doc")
         .DisableAntiforgery(); // FONDAMENTALE per client desktop come Avalonia
+    }
+
+    static private async Task AggiornaAnagrafiche(IDocService docService,int idDoc)
+    {
+        try
+        {
+            await docService.AddOrUpdateFornitorieArticoli(idDoc);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 }
 

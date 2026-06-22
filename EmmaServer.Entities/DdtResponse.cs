@@ -16,3 +16,11 @@ public class DdtResponse
     [JsonPropertyName("document")]
     public DatiBolla Document { get; set; } = new();
 }
+
+
+public class DocResponse
+{
+    [JsonPropertyName("doc_id")]
+    public int DocId { get; set; }
+    public DdtResponse?  DdtResponse { get; set; }
+}

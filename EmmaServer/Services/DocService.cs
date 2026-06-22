@@ -13,15 +13,27 @@ public interface IDocService
     Task<bool?> DeleteAsync(EmmaDoc doc);
     Task<int?> AddDocAsync(string fornitore, string numero_doc, string data_doc,
         string json, string fileName, byte[] file_byte, string tenant);
+
+    Task AddOrUpdateFornitorieArticoli(int docId);
 }
 
 public class DocService : IDocService
 {
     private readonly IDocRepository _repo;
-
-    public DocService(IDocRepository repo)
+    private readonly IFornitoriService _fornitoriService;
+    private readonly IArticoliService _articoliService;
+    public DocService(IDocRepository repo, IFornitoriService fornitoriService,
+        IArticoliService articoliService)
     {
         _repo = repo;
+        _fornitoriService = fornitoriService;
+        _articoliService = articoliService; 
+    }
+
+    public async Task AddOrUpdateFornitorieArticoli(int docId)
+    {
+        int idFornitore = await _fornitoriService.AddOrUpdateFornitoriByDocIdAsync(docId);
+        await _articoliService.AddOrUpdateArticoliByDocIdAsync(docId, idFornitore);
     }
     
     public async Task<int?> AddAsync(EmmaDoc doc)

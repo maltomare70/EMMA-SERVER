@@ -34,6 +34,7 @@ public class EmmaRepository: IEmmaRepository
         await CreateTableFromClassAsync<EmmaUser>();
         await CreateTableFromClassAsync<EmmaDoc>();
         await CreateTableFromClassAsync<EmmaFornitori>();
+        await CreateTableFromClassAsync<EmmaArticoli>();
     }
     
 
@@ -87,7 +88,7 @@ public class EmmaRepository: IEmmaRepository
             if (columnDefinitions.Length > 0)
                 columnDefinitions.Append(", ");
 
-                columnDefinitions.Append($"\"{columnName}\" {sqlDataType}");
+            columnDefinitions.Append($"\"{columnName}\" {sqlDataType}");
         }
 
         columnDefinitions.Append($" , CONSTRAINT {tableName}_pk PRIMARY KEY(id) ");
@@ -98,7 +99,9 @@ public class EmmaRepository: IEmmaRepository
 
         if (tableName.ToLower() == "users")
             sql +=  " CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON public.users USING btree (email);";
-
+        else if (tableName.ToLower() == "articoli")
+            sql +=  " CREATE INDEX IF NOT EXISTS id_fornitore_idx ON public.articoli USING btree (idFornitore);";
+        
         using var db = await CreaConnessione();
         await db.ExecuteAsync(sql);
 
