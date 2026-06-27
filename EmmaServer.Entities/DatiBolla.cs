@@ -69,6 +69,12 @@ public class DatiBolla
 
 public class ArticoloBolla
 {
+    [JsonPropertyName("id_riga")]
+    public string Id_Riga { get; set; } = string.Empty;
+    
+    [JsonPropertyName("id_master")]
+    public string Id_Master { get; set; } = string.Empty;
+    
     [JsonPropertyName("codice")]
     public string Codice { get; set; } = string.Empty;
 

@@ -15,6 +15,7 @@ public interface IArticoliService
     Task<IEnumerable<EmmaArticoli?>> GetAllTenantAsync();
     Task AddOrUpdateArticoliByDocIdAsync(int docId, int idFornitore);
 
+
 }
 
 public class ArticoliService : IArticoliService
@@ -96,7 +97,8 @@ public class ArticoliService : IArticoliService
         
         return await _repository.GetAllTenantAsync(tenant);
     }
-    
+
+
     public async Task AddOrUpdateArticoliByDocIdAsync(int docId, int idFornitore)
     {
         var doc = await _docRepository.GetIdAsync(docId);

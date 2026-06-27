@@ -8,13 +8,13 @@ public record BolleMaster : IEntity
     public int id { get; init; }
     [Write(false)] 
     public DateTime data_creazione { get; init; }
-    public int id_bolla { get; init; }
+    public int id_bolla { get; set; }
     public string fornitore { get; set; }
     public string numero_bolla { get; set; }
     public string data_bolla { get; set; }
-    public int tipo_doc { get; init; }
-    public double imponibile { get; init; }
-    public double totale { get; init; }
+    public int tipo_doc { get; set; }
+    public double imponibile { get; set; }
+    public double totale { get; set; }
 }
 
 

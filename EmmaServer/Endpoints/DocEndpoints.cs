@@ -23,6 +23,14 @@ public static class DocEndpoints
             Results.Ok();
         } ).WithName("Anagrafiche");
         
+        
+        app.MapPut("/api/v1/doc/riga", async (
+            [FromBody] ArticoloBolla articoloBolla, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
+        {
+            await docService.UpdateRigaDoc(articoloBolla);
+            Results.Ok();
+        } ).WithName("UpdateRigaDoc");
+        
         // Per acquisire tutte i documenti
         app.MapPost("/api/v1/doc", async (EmmaDocFilters docFilters,
                 [FromServices] IDocService docService, ClaimsPrincipal claims) =>
@@ -103,7 +111,11 @@ public static class DocEndpoints
                     // 3. Deserializza la stringa nell'oggetto DatiBolla
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     DdtResponse? ddtResponse = JsonSerializer.Deserialize<DdtResponse>(responseContent, options);
-
+                    foreach (var articoloBolla in ddtResponse?.Document?.Articoli)
+                    {
+                        articoloBolla.Id_Master = ddtResponse.Document.Id;
+                        articoloBolla.Id_Riga = Guid.NewGuid().ToString();
+                    }
                     //Salvo sul database
                     int? idDoc = 0;
                     if (ddtResponse is not null)
@@ -113,8 +125,11 @@ public static class DocEndpoints
                                 Fornitore = ddtResponse.Document.Mittente,
                                 NumeroDoc = ddtResponse.Document.NumeroBolla,
                                 DataDoc = ddtResponse.Document.DataBolla,
-                                Stato = 0
+                                Stato = 0,
+                                TipoDoc = int.Parse(ddtResponse.Document.TipoDocumento)
                         };
+                        responseContent =  JsonSerializer.Serialize(ddtResponse, options);
+                        
                         idDoc = await docService.AddDocAsync(emmaDocFilters , 
                              responseContent,
                             ddtResponse.FileName ?? string.Empty, file_byte, tenant);

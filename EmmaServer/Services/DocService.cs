@@ -16,6 +16,7 @@ public interface IDocService
         string json, string fileName, byte[] file_byte, string tenant);
 
     Task AddOrUpdateFornitorieArticoli(int docId);
+    Task UpdateRigaDoc(ArticoloBolla articoloBolla);
 }
 
 public class DocService : IDocService
@@ -41,6 +42,12 @@ public class DocService : IDocService
     {
         return await _repo.AddAsync(doc);
     }
+    
+    public async Task UpdateRigaDoc(ArticoloBolla articoloBolla)
+    {
+        await _repo.UpdateRigaDocAsync(articoloBolla);
+    }
+
     
     public async Task<bool?> DeleteAsync(EmmaDoc doc)
     {

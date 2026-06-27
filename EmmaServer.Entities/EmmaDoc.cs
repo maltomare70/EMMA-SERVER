@@ -10,7 +10,7 @@ public record EmmaDoc: IEntity
     public string file_name { get; init; } = string.Empty;
     [Write(false)] 
     public DateTime data_creazione { get; init; } = DateTime.UtcNow;
-    public JsonDocument? content { get; init; }
+    public JsonDocument? content { get; set; }
     public byte[]? allegato { get; set; }
     public string tenant { get; set; } = string.Empty;
     public int stato { get; set; } = 0;

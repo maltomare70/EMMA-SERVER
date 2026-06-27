@@ -16,6 +16,8 @@ public class MasterDocumento
 // Oggetto delle sotto-righe di dettaglio
 public class RigheDocumento
 {
+    public string? IdRiga { get; set; }
+    public string? IdMaster { get; set; }
     public string? CodiceArticolo { get; set; }
     
     public string? DescrizioneArticolo { get; set; }
