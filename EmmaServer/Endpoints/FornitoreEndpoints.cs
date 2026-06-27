@@ -38,7 +38,7 @@ public static class  FornitoreEndpoints
             })
             .WithName("UpdateFornitore");
         
-        app.MapGet("/api/fornitori", async (ClaimsPrincipal claims, string tenant, HttpContext httpContext, [FromServices] IFornitoriService fornitoriService) =>
+        app.MapGet("/api/fornitori", async (ClaimsPrincipal claims, [FromServices] IFornitoriService fornitoriService) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
 

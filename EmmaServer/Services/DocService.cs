@@ -8,10 +8,11 @@ namespace EmmaServer.Services;
 public interface IDocService
 {
     Task<int?> AddAsync(EmmaDoc doc);
-    Task<List<EmmaDoc?>> GetDocByFornitore(string fornitore);
-    Task<EmmaDoc?> GetDocAsync(string fornitore, string numero_doc, string dataa_doc);
+    //Task<List<EmmaDoc?>> GetDocByFornitore(string fornitore);
+    //Task<EmmaDoc?> GetDocAsync(EmmaDocFilters emmaDocFilters);
+    Task<List<EmmaDoc?>> GetDocsAsync(EmmaDocFilters emmaDocFilters);
     Task<bool?> DeleteAsync(EmmaDoc doc);
-    Task<int?> AddDocAsync(string fornitore, string numero_doc, string data_doc,
+    Task<int?> AddDocAsync(EmmaDocFilters emmaDocFilters,
         string json, string fileName, byte[] file_byte, string tenant);
 
     Task AddOrUpdateFornitorieArticoli(int docId);
@@ -46,21 +47,28 @@ public class DocService : IDocService
         return await _repo.DeleteAsync(doc);
     }
 
-    public async Task<List<EmmaDoc?>> GetDocByFornitore(string fornitore)
+    // public async Task<List<EmmaDoc?>> GetDocByFornitore(string fornitore)
+    // {
+    //     return await _repo.GetDocsByFornitore(fornitore);
+    // }
+    
+
+    
+    public async Task<List<EmmaDoc?>> GetDocsAsync(EmmaDocFilters emmaDocFilters)
     {
-        return await _repo.GetDocsByFornitore(fornitore);
+        return await _repo.GetDocsAsync(emmaDocFilters);
     }
     
-    public async Task<EmmaDoc?> GetDocAsync(string fornitore, string numero_doc, string data_doc)
-    {
-        return await _repo.GetDocAsync( fornitore,  numero_doc,  data_doc);
-    }
-    
-    public async Task<int?> AddDocAsync(string fornitore, string numero_bolla, string data_bolla, string json, 
+    public async Task<int?> AddDocAsync(EmmaDocFilters emmaDocFilter, string json, 
         string fileName, byte[] file_byte, string tenant)
     {
-        var doc = await GetDocAsync(fornitore, numero_bolla,  data_bolla);
-        if (doc is not null) await DeleteAsync(doc);
+        var doclist = await GetDocsAsync(emmaDocFilter);
+        if (doclist?.Count == 1)
+        {
+            var doc = doclist.FirstOrDefault();
+            if (doc is not null) await DeleteAsync(doc);
+        }
+
         //inserisco
         return await AddAsync((new EmmaDoc()
         {

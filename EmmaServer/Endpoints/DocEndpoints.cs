@@ -8,6 +8,7 @@ using System.Security.Claims;
 namespace EmmaServer.Endpoints;
 
 
+
 public static class DocEndpoints
 {
     // Questo metodo accetta l'app e registra le rotte al suo interno
@@ -22,22 +23,20 @@ public static class DocEndpoints
             Results.Ok();
         } ).WithName("Anagrafiche");
         
-        // Per acquisire tutte le bolle di un fornitore
-        // richiede filtri aggiuntivi per essere utilizzata
-        // tutte le aperte... ad una certa data ...
-        app.MapGet("/api/v1/doc", async ([FromQuery] string fornitore, 
+        // Per acquisire tutte i documenti
+        app.MapPost("/api/v1/doc", async (EmmaDocFilters docFilters,
                 [FromServices] IDocService docService, ClaimsPrincipal claims) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                if (string.IsNullOrWhiteSpace(fornitore)) return Results.BadRequest("Il parametro 'fornitore' è obbligatorio.");
+                //if (string.IsNullOrWhiteSpace(fornitore)) return Results.BadRequest("Il parametro 'fornitore' è obbligatorio.");
                 
-                var docs = await docService.GetDocByFornitore(fornitore);
+                var docs = await docService.GetDocsAsync(docFilters);
                 
                 return docs is not null
                     ? Results.Ok(docs)
-                    : Results.NotFound($"Doc del {fornitore} non trovate.");
+                    : Results.NotFound($"Doc del {docFilters.Fornitore} non trovate.");
             })
-            .WithName("GetDocByFornitore");
+            .WithName("GetDocs");
         
         
         /// Endpoint per l'upload del file PDF e l'inoltro a un'API esterna
@@ -109,9 +108,15 @@ public static class DocEndpoints
                     int? idDoc = 0;
                     if (ddtResponse is not null)
                     {
-                        idDoc = await docService.AddDocAsync(ddtResponse.Document.Mittente, 
-                            ddtResponse.Document.NumeroBolla, 
-                            ddtResponse.Document.DataBolla, responseContent,
+                        EmmaDocFilters emmaDocFilters = new EmmaDocFilters()
+                        {
+                                Fornitore = ddtResponse.Document.Mittente,
+                                NumeroDoc = ddtResponse.Document.NumeroBolla,
+                                DataDoc = ddtResponse.Document.DataBolla,
+                                Stato = 0
+                        };
+                        idDoc = await docService.AddDocAsync(emmaDocFilters , 
+                             responseContent,
                             ddtResponse.FileName ?? string.Empty, file_byte, tenant);
                     }
                     
