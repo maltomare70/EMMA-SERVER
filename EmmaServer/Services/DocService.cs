@@ -8,8 +8,6 @@ namespace EmmaServer.Services;
 public interface IDocService
 {
     Task<int?> AddAsync(EmmaDoc doc);
-    //Task<List<EmmaDoc?>> GetDocByFornitore(string fornitore);
-    //Task<EmmaDoc?> GetDocAsync(EmmaDocFilters emmaDocFilters);
     Task<List<EmmaDoc?>> GetDocsAsync(EmmaDocFilters emmaDocFilters);
     Task<bool?> DeleteAsync(EmmaDoc doc);
     Task<int?> AddDocAsync(EmmaDocFilters emmaDocFilters,
@@ -19,6 +17,8 @@ public interface IDocService
     Task InsertRigaDocAsync(ArticoloBolla articoloBolla);
     Task UpdateRigaDocAsync(ArticoloBolla articoloBolla);
     Task DeleteRigaDocAsync(ArticoloBolla articoloBolla);
+    Task<bool> UpdateAsync(EmmaDoc doc);
+    Task CambiaStatoAsync(CambioStato cambioStato);
 }
 
 public class DocService : IDocService
@@ -45,6 +45,17 @@ public class DocService : IDocService
         return await _repo.AddAsync(doc);
     }
 
+    public async Task<bool> UpdateAsync(EmmaDoc doc)
+    {
+        return await _repo.UpdateAsync(doc);
+    }
+    
+    public async Task CambiaStatoAsync(CambioStato cambioStato)
+    {
+        await _repo.CambiaStatoAsync(cambioStato);
+    }
+    
+    
     public async Task InsertRigaDocAsync(ArticoloBolla articoloBolla)
     {
         await _repo.InsertRigaDocAsync(articoloBolla);
@@ -66,14 +77,6 @@ public class DocService : IDocService
     {
         await _repo.DeleteRigaDocAsync(articoloBolla);
     }
-
-    
-    // public async Task<List<EmmaDoc?>> GetDocByFornitore(string fornitore)
-    // {
-    //     return await _repo.GetDocsByFornitore(fornitore);
-    // }
-    
-
     
     public async Task<List<EmmaDoc?>> GetDocsAsync(EmmaDocFilters emmaDocFilters)
     {
@@ -84,7 +87,7 @@ public class DocService : IDocService
         string fileName, byte[] file_byte, string tenant)
     {
         var doclist = await GetDocsAsync(emmaDocFilter);
-        if (doclist?.Count == 1)
+        if (doclist?.Count > 0)
         {
             var doc = doclist.FirstOrDefault();
             if (doc is not null) await DeleteAsync(doc);

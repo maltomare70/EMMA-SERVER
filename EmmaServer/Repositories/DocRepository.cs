@@ -8,11 +8,12 @@ namespace EmmaServer.Repositories;
 
 public interface IDocRepository: IRepositoryGenerico<EmmaDoc>
 {
-    //Task<List<EmmaDoc?>> GetDocsByFornitore(string fornitore);
     Task<List<EmmaDoc?>> GetDocsAsync(EmmaDocFilters docFilters);
     Task UpdateRigaDocAsync(ArticoloBolla articoloBolla);
     Task InsertRigaDocAsync(ArticoloBolla articoloBolla);
     Task DeleteRigaDocAsync(ArticoloBolla articoloBolla);
+    
+    Task CambiaStatoAsync(CambioStato cambioStato);
 }
 
 public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
@@ -23,25 +24,6 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
         _connectionProvider =  connectionProvider;
         ;
     }
-    
-    // public async  Task<List<EmmaDoc?>> GetDocsByFornitore(string fornitore)
-    // {
-    //
-    //     var tenant = _connectionProvider.GetTenant();
-    //         
-    //     string sql = @$"SELECT id, file_name, data_creazione, content, tenant, stato  FROM docs 
-    //                 WHERE tenant = @Tenant AND content->'document'->>'mittente' = @Mittente;";
-    //
-    //     var parametri = new {
-    //         Tenant = tenant,
-    //         Mittente = fornitore
-    //     };
-    //
-    //     using var db = await CreaConnessione();
-    //     
-    //     var risultati = await db.QueryAsync<EmmaDoc>(sql, parametri);
-    //     return risultati.ToList();
-    // }
 
     public async Task DeleteRigaDocAsync(ArticoloBolla articoloBolla)
     {
@@ -173,12 +155,17 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
         var sqlBuilder = new StringBuilder(@"
         SELECT id, file_name, data_creazione, content, tenant, stato 
         FROM docs 
-        WHERE tenant = @Tenant AND stato = @Stato");
+        WHERE tenant = @Tenant ");
 
         // 2. Initialize DynamicParameters with static values
         var parametri = new DynamicParameters();
         parametri.Add("Tenant", tenant);
-        parametri.Add("Stato", docFilters.Stato);
+        
+        if (docFilters.Stato > -1)
+        {
+            sqlBuilder.Append(" AND stato = @Stato");
+            parametri.Add("Stato", docFilters.Stato);
+        }
 
         // 3. Conditionally append SQL and parameters
         if (!string.IsNullOrWhiteSpace(docFilters.Fornitore))
@@ -212,5 +199,25 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
     
         var risultati =  await db.QueryAsync<EmmaDoc>(sqlBuilder.ToString(), parametri);
         return risultati.ToList();
+    }
+
+    public async Task CambiaStatoAsync(CambioStato cambioStato)
+    {
+        var tenant = _connectionProvider.GetTenant();
+        
+        var sqlBuilder = new StringBuilder(@"
+        UPDATE docs SET stato = @Stato         
+        WHERE tenant = @Tenant");
+        var parametri = new DynamicParameters();
+        parametri.Add("Stato", cambioStato.Stato);
+        parametri.Add("Tenant", tenant);
+        
+        sqlBuilder.Append(" AND content->'document'->>'id' = @Id");
+        parametri.Add("Id", cambioStato.Id);
+        
+        sqlBuilder.Append(";");
+        
+        using var db = await CreaConnessione();
+        var ret = await db.ExecuteAsync(sqlBuilder.ToString(), parametri);
     }
 }

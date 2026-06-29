@@ -24,9 +24,12 @@ public record EmmaDoc: IEntity
         var ddtResponse = content?.RootElement.Deserialize<DdtResponse>();
         return ddtResponse?.Document;
     }
-
-
     
- 
-
 }
+
+public class CambioStato
+{
+    public string Id { get; set; } = string.Empty;
+    public int Stato { get; set; } = 0;
+}
+

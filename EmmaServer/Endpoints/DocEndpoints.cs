@@ -69,7 +69,15 @@ public static class DocEndpoints
                     : Results.NotFound($"Doc del {docFilters.Fornitore} non trovate.");
             })
             .WithName("GetDocs");
-        
+
+        app.MapPost ("/api/v1/doc/stato", async (CambioStato cambioStato, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
+        {
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+
+            await docService.CambiaStatoAsync(cambioStato);
+            return Results.Ok();
+            
+        }).WithName("CambiaStato");
         
         /// Endpoint per l'upload del file PDF e l'inoltro a un'API esterna
         app.MapPost("/api/v1/doc", async (IFormFile file, 
@@ -126,7 +134,6 @@ public static class DocEndpoints
                 var apiKey = configuration["EMMA-AI:ApiKey"];
                 request.Headers.Add("X-API-Key", apiKey);
                 
-                //var response = await client.PostAsync(externalApiUrl, form);
                 var response = await client.SendAsync(request);
                 
                 if (response.IsSuccessStatusCode)
@@ -145,7 +152,7 @@ public static class DocEndpoints
                                 Fornitore = ddtResponse.Document.Mittente,
                                 NumeroDoc = ddtResponse.Document.NumeroBolla,
                                 DataDoc = ddtResponse.Document.DataBolla,
-                                Stato = 0,
+                                Stato = -1,
                                 TipoDoc = int.Parse(ddtResponse.Document.TipoDocumento)
                         };
                         responseContent =  JsonSerializer.Serialize(ddtResponse, options);
