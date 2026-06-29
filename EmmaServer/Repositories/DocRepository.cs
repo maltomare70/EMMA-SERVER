@@ -11,6 +11,7 @@ public interface IDocRepository: IRepositoryGenerico<EmmaDoc>
     //Task<List<EmmaDoc?>> GetDocsByFornitore(string fornitore);
     Task<List<EmmaDoc?>> GetDocsAsync(EmmaDocFilters docFilters);
     Task UpdateRigaDocAsync(ArticoloBolla articoloBolla);
+    Task InsertRigaDocAsync(ArticoloBolla articoloBolla);
 }
 
 public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
@@ -41,6 +42,47 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
     //     return risultati.ToList();
     // }
 
+    public async Task InsertRigaDocAsync(ArticoloBolla articoloBolla)
+    {
+        var tenant = _connectionProvider.GetTenant();
+
+        // 1. Base query and static conditions
+        var sqlBuilder = new StringBuilder(@"
+        SELECT id, file_name, data_creazione, content, tenant, stato 
+        FROM docs 
+        WHERE tenant = @Tenant");
+        var parametri = new DynamicParameters();
+        parametri.Add("Tenant", tenant);
+        
+        sqlBuilder.Append(" AND content->'document'->>'id' = @Id");
+        parametri.Add("Id", articoloBolla.Id_Master);
+        
+        sqlBuilder.Append(";");
+
+        using var db = await CreaConnessione();
+        var emmaDoc = await db.QuerySingleAsync<EmmaDoc>(sqlBuilder.ToString(), parametri);
+        
+        var ddtResponse = emmaDoc?.content?.Deserialize<DdtResponse>();
+        
+        var riga = new ArticoloBolla();
+        riga.Id_Master = articoloBolla.Id_Master;
+        riga.Id_Riga = articoloBolla.Id_Riga;
+        riga.Quantita = articoloBolla.Quantita;
+        riga.Codice = articoloBolla.Codice;
+        riga.Descrizione = articoloBolla.Descrizione;
+        riga.Imponibile = articoloBolla.Imponibile;
+        riga.Totale = articoloBolla.Totale;
+        riga.Iva = articoloBolla.Iva;
+        riga.UnitaMisura = articoloBolla.UnitaMisura;
+        ddtResponse.Document.Articoli.Add(riga);
+
+        using JsonDocument ddtResponseModificato = ConvertObjectToJsonDocument(ddtResponse);
+        emmaDoc.content = ddtResponseModificato;
+
+        await UpdateAsync(emmaDoc);
+        
+    }
+    
     public async Task UpdateRigaDocAsync(ArticoloBolla articoloBolla)
     {
         var tenant = _connectionProvider.GetTenant();

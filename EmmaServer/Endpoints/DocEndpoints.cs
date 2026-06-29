@@ -15,20 +15,35 @@ public static class DocEndpoints
     public static void MapDocRoutes(this IEndpointRouteBuilder app)
     {
         //una volta salvato il documento
-        //si caricano le anagrafiche Forniori e Articoli
+        //si allineano le anagrafiche Forniori e Articoli
         app.MapPost("/api/v1/doc/anagrafiche", async (
             [FromBody] int idDoc, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
         {
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) 
+                return Results.BadRequest("Utente non autorizzato");
+            
             await docService.AddOrUpdateFornitorieArticoli(idDoc);
-            Results.Ok();
+            return Results.Ok();
         } ).WithName("Anagrafiche");
         
+        //aggiunta nuova riga
+        app.MapPost("/api/v1/doc/riga", async (
+            [FromBody] ArticoloBolla articoloBolla, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
+        {
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+            
+            await docService.InsertRigaDocAsync(articoloBolla);
+            return Results.Ok();
+        } ).WithName("InsertRigaDoc");
         
+        //Modifica riga esistente
         app.MapPut("/api/v1/doc/riga", async (
             [FromBody] ArticoloBolla articoloBolla, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
         {
-            await docService.UpdateRigaDoc(articoloBolla);
-            Results.Ok();
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+            
+            await docService.UpdateRigaDocAsync(articoloBolla);
+            return Results.Ok();
         } ).WithName("UpdateRigaDoc");
         
         // Per acquisire tutte i documenti

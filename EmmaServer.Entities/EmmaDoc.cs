@@ -1,6 +1,8 @@
 using Dapper.Contrib.Extensions;
 using System.Text.Json;
 namespace EmmaServer.Entities;
+using System.Text;
+using System.Text.Json;
 
 [Table("docs")] 
 public record EmmaDoc: IEntity
@@ -14,4 +16,17 @@ public record EmmaDoc: IEntity
     public byte[]? allegato { get; set; }
     public string tenant { get; set; } = string.Empty;
     public int stato { get; set; } = 0;
+
+
+    public DatiBolla? ToDoc()
+    {
+        // Fix: Use RootElement to properly deserialize a JsonDocument
+        var ddtResponse = content?.RootElement.Deserialize<DdtResponse>();
+        return ddtResponse?.Document;
+    }
+
+
+    
+ 
+
 }
