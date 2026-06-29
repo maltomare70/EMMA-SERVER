@@ -12,6 +12,7 @@ public interface IDocRepository: IRepositoryGenerico<EmmaDoc>
     Task<List<EmmaDoc?>> GetDocsAsync(EmmaDocFilters docFilters);
     Task UpdateRigaDocAsync(ArticoloBolla articoloBolla);
     Task InsertRigaDocAsync(ArticoloBolla articoloBolla);
+    Task DeleteRigaDocAsync(ArticoloBolla articoloBolla);
 }
 
 public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
@@ -41,6 +42,38 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
     //     var risultati = await db.QueryAsync<EmmaDoc>(sql, parametri);
     //     return risultati.ToList();
     // }
+
+    public async Task DeleteRigaDocAsync(ArticoloBolla articoloBolla)
+    {
+        var tenant = _connectionProvider.GetTenant();
+
+        // 1. Base query and static conditions
+        var sqlBuilder = new StringBuilder(@"
+        SELECT id, file_name, data_creazione, content, tenant, stato 
+        FROM docs 
+        WHERE tenant = @Tenant");
+        var parametri = new DynamicParameters();
+        parametri.Add("Tenant", tenant);
+        
+        sqlBuilder.Append(" AND content->'document'->>'id' = @Id");
+        parametri.Add("Id", articoloBolla.Id_Master);
+        
+        sqlBuilder.Append(";");
+
+        using var db = await CreaConnessione();
+        var emmaDoc = await db.QuerySingleAsync<EmmaDoc>(sqlBuilder.ToString(), parametri);
+        //contenuto del content
+        var ddtResponse = emmaDoc?.content?.Deserialize<DdtResponse>();
+        var doc = ddtResponse?.Document;
+        var riga = doc?.Articoli.FirstOrDefault((x => x.Id_Riga.ToLower() == articoloBolla.Id_Riga.ToLower()));
+        doc.Articoli.Remove(riga);
+
+        using JsonDocument ddtResponseModificato = ConvertObjectToJsonDocument(ddtResponse);
+        emmaDoc.content = ddtResponseModificato;
+
+        await UpdateAsync(emmaDoc);
+    }
+    
 
     public async Task InsertRigaDocAsync(ArticoloBolla articoloBolla)
     {

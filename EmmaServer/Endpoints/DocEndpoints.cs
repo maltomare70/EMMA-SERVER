@@ -46,6 +46,15 @@ public static class DocEndpoints
             return Results.Ok();
         } ).WithName("UpdateRigaDoc");
         
+        app.MapDelete("/api/v1/doc/riga", async (
+            [FromBody] ArticoloBolla articoloBolla, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
+        {
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+            
+            await docService.DeleteRigaDocAsync(articoloBolla);
+            return Results.Ok();
+        } ).WithName("DeleteRigaDoc");
+        
         // Per acquisire tutte i documenti
         app.MapPost("/api/v1/doc", async (EmmaDocFilters docFilters,
                 [FromServices] IDocService docService, ClaimsPrincipal claims) =>
@@ -126,11 +135,7 @@ public static class DocEndpoints
                     // 3. Deserializza la stringa nell'oggetto DatiBolla
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     DdtResponse? ddtResponse = JsonSerializer.Deserialize<DdtResponse>(responseContent, options);
-                    foreach (var articoloBolla in ddtResponse?.Document?.Articoli)
-                    {
-                        articoloBolla.Id_Master = ddtResponse.Document.Id;
-                        articoloBolla.Id_Riga = Guid.NewGuid().ToString();
-                    }
+                    
                     //Salvo sul database
                     int? idDoc = 0;
                     if (ddtResponse is not null)

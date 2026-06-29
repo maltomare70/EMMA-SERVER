@@ -18,6 +18,7 @@ public interface IDocService
     Task AddOrUpdateFornitorieArticoli(int docId);
     Task InsertRigaDocAsync(ArticoloBolla articoloBolla);
     Task UpdateRigaDocAsync(ArticoloBolla articoloBolla);
+    Task DeleteRigaDocAsync(ArticoloBolla articoloBolla);
 }
 
 public class DocService : IDocService
@@ -61,6 +62,12 @@ public class DocService : IDocService
         return await _repo.DeleteAsync(doc);
     }
 
+    public async Task DeleteRigaDocAsync(ArticoloBolla articoloBolla)
+    {
+        await _repo.DeleteRigaDocAsync(articoloBolla);
+    }
+
+    
     // public async Task<List<EmmaDoc?>> GetDocByFornitore(string fornitore)
     // {
     //     return await _repo.GetDocsByFornitore(fornitore);

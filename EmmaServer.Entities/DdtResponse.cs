@@ -17,16 +17,8 @@ public class DdtResponse
 
     [JsonPropertyName("document")]
     public DatiBolla Document { get; set; } = new();
-
-
- public static JsonDocument ConvertObjectToJsonDocument<T>(T obj)
-    {
-        // Serializza l'oggetto direttamente in un array di byte (più veloce rispetto alla stringa)
-        byte[] jsonBytes = JsonSerializer.SerializeToUtf8Bytes(obj);
     
-        // Parsifica i byte per ottenere il JsonDocument
-        return JsonDocument.Parse(jsonBytes);
-    }
+
 }
 
 
