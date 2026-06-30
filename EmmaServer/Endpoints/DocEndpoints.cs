@@ -55,6 +55,16 @@ public static class DocEndpoints
             return Results.Ok();
         } ).WithName("DeleteRigaDoc");
         
+        
+        app.MapDelete("/api/v1/doc", async (
+            [FromBody] EmmaDocFilters docFilters, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
+        {
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+            
+            await docService.DeleteDocAsync(docFilters);
+            return Results.Ok();
+        } ).WithName("DeleteDoc");
+        
         // Per acquisire tutte i documenti
         app.MapPost("/api/v1/doc", async (EmmaDocFilters docFilters,
                 [FromServices] IDocService docService, ClaimsPrincipal claims) =>

@@ -19,6 +19,7 @@ public interface IDocService
     Task DeleteRigaDocAsync(ArticoloBolla articoloBolla);
     Task<bool> UpdateAsync(EmmaDoc doc);
     Task CambiaStatoAsync(CambioStato cambioStato);
+    Task DeleteDocAsync(EmmaDocFilters emmaDocFilter);
 }
 
 public class DocService : IDocService
@@ -81,6 +82,16 @@ public class DocService : IDocService
     public async Task<List<EmmaDoc?>> GetDocsAsync(EmmaDocFilters emmaDocFilters)
     {
         return await _repo.GetDocsAsync(emmaDocFilters);
+    }
+
+    public async Task DeleteDocAsync(EmmaDocFilters emmaDocFilter)
+    {
+        var doclist = await GetDocsAsync(emmaDocFilter);
+        if (doclist?.Count > 0)
+        {
+            var doc = doclist.FirstOrDefault();
+            if (doc is not null) await DeleteAsync(doc);
+        }
     }
     
     public async Task<int?> AddDocAsync(EmmaDocFilters emmaDocFilter, string json, 
