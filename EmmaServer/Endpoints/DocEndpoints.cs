@@ -16,6 +16,7 @@ public static class DocEndpoints
     {
         //una volta salvato il documento
         //si allineano le anagrafiche Forniori e Articoli
+        //questa api è per test
         app.MapPost("/api/v1/doc/anagrafiche", async (
             [FromBody] int idDoc, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
         {
@@ -24,9 +25,9 @@ public static class DocEndpoints
             
             await docService.AddOrUpdateFornitorieArticoli(idDoc);
             return Results.Ok();
-        } ).WithName("Anagrafiche");
+        } ).WithName("AllineamentoAnagrafiche");
         
-        //aggiunta nuova riga
+        //aggiunta di nuova riga
         app.MapPost("/api/v1/doc/riga", async (
             [FromBody] ArticoloBolla articoloBolla, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
         {
@@ -34,7 +35,7 @@ public static class DocEndpoints
             
             await docService.InsertRigaDocAsync(articoloBolla);
             return Results.Ok();
-        } ).WithName("InsertRigaDoc");
+        } ).WithName("AggiungiRigaDoc");
         
         //Modifica riga esistente
         app.MapPut("/api/v1/doc/riga", async (
@@ -44,8 +45,9 @@ public static class DocEndpoints
             
             await docService.UpdateRigaDocAsync(articoloBolla);
             return Results.Ok();
-        } ).WithName("UpdateRigaDoc");
+        } ).WithName("ModificaRigaDoc");
         
+        //cancellazione riga
         app.MapDelete("/api/v1/doc/riga", async (
             [FromBody] ArticoloBolla articoloBolla, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
         {
@@ -53,9 +55,9 @@ public static class DocEndpoints
             
             await docService.DeleteRigaDocAsync(articoloBolla);
             return Results.Ok();
-        } ).WithName("DeleteRigaDoc");
+        } ).WithName("CancellazioneRigaDoc");
         
-        
+        //cancellazione intero documento
         app.MapDelete("/api/v1/doc", async (
             [FromBody] EmmaDocFilters docFilters, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
         {
@@ -63,14 +65,13 @@ public static class DocEndpoints
             
             await docService.DeleteDocAsync(docFilters);
             return Results.Ok();
-        } ).WithName("DeleteDoc");
+        } ).WithName("CancellazioneDoc");
         
-        // Per acquisire tutte i documenti
+        // Per acquisire tutte i documenti secondo quanto filtrato
         app.MapPost("/api/v1/doc", async (EmmaDocFilters docFilters,
                 [FromServices] IDocService docService, ClaimsPrincipal claims) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                //if (string.IsNullOrWhiteSpace(fornitore)) return Results.BadRequest("Il parametro 'fornitore' è obbligatorio.");
                 
                 var docs = await docService.GetDocsAsync(docFilters);
                 
@@ -80,6 +81,7 @@ public static class DocEndpoints
             })
             .WithName("GetDocs");
 
+        //Per il camboio stato
         app.MapPost ("/api/v1/doc/stato", async (CambioStato cambioStato, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
         {
             if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
@@ -199,7 +201,7 @@ public static class DocEndpoints
         .DisableAntiforgery(); // FONDAMENTALE per client desktop come Avalonia
     }
 
-    static private async Task AggiornaAnagrafiche(IDocService docService,int idDoc)
+     private static async Task AggiornaAnagrafiche(IDocService docService,int idDoc)
     {
         try
         {

@@ -6,11 +6,11 @@ namespace EmmaServer.Entities;
 public record EmmaArticoli: IEntity
 {
     [Dapper.Contrib.Extensions.Key]
-    public int id { get; init; }
+    public int id { get; set; }
     public string codice { get; set; } = string.Empty;
     public string descrizione { get; set; } = string.Empty;
     [Write(false)] 
-    public DateTime data_creazione { get; init; } = DateTime.UtcNow;
+    public DateTime data_creazione { get; set; } = DateTime.UtcNow;
     
     public string rifcodice{ get; set; } = string.Empty;
     

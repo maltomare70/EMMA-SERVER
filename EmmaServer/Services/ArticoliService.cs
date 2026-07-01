@@ -75,19 +75,10 @@ public class ArticoliService : IArticoliService
     {
         var tenant = _connectionProvider.GetTenant();
         if (string.IsNullOrWhiteSpace(tenant)) throw new ArgumentException("Tenant is null or empty");
-        
-        EmmaArticoli emmaArticoli = new EmmaArticoli()
-        {
-            codice = articolo.codice,
-            descrizione = articolo.descrizione,
-            rifcodice =  articolo.rifcodice,
-            rifdescrizione =  articolo.rifdescrizione,
-            scorecodice = articolo.scorecodice,
-            scoredescrizione = articolo.scoredescrizione,
-            idfornitore = articolo.idfornitore,
-            tenant = tenant
-        };
-        return await _repository.UpdateAsync(emmaArticoli);
+
+        articolo.tenant = tenant;
+
+        return await _repository.UpdateAsync(articolo);
     }
 
     public async Task<IEnumerable<EmmaArticoli?>> GetAllTenantAsync()

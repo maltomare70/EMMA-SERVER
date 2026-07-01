@@ -5,9 +5,9 @@ namespace EmmaServer.Entities;
 public record BolleMaster : IEntity
 {
     [Dapper.Contrib.Extensions.Key]
-    public int id { get; init; }
+    public int id { get; set; }
     [Write(false)] 
-    public DateTime data_creazione { get; init; }
+    public DateTime data_creazione { get; set; }
     public int id_bolla { get; set; }
     public string fornitore { get; set; }
     public string numero_bolla { get; set; }

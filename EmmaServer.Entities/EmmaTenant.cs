@@ -8,11 +8,11 @@ namespace EmmaServer.Entities;
 public record EmmaTenant: IEntity
 {
     [Dapper.Contrib.Extensions.Key]
-    public int id { get; init; }
+    public int id { get; set; }
     [Required]
     public string codice { get; init; } = string.Empty;
     [Required]
     public string? descrizione { get; init; } = string.Empty;
     [Write(false)] 
-    public DateTime data_creazione { get; init; }= DateTime.UtcNow;
+    public DateTime data_creazione { get; set; }= DateTime.UtcNow;
 }

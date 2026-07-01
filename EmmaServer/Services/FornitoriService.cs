@@ -13,7 +13,7 @@ public interface IFornitoriService
     Task<bool?> UpdateFornitoreAsync(EmmaFornitori fornitore);
     Task<IEnumerable<EmmaFornitori?>> GetAllTenantAsync();
     Task<int> AddOrUpdateFornitoriByDocIdAsync(int docId);
-
+    Task<bool?> DeleteFornitoreAsync(EmmaFornitori fornitore);
 }
 
 public class FornitoriService : IFornitoriService
@@ -110,13 +110,18 @@ public class FornitoriService : IFornitoriService
         var tenant = _connectionProvider.GetTenant();
         if (string.IsNullOrWhiteSpace(tenant)) throw new ArgumentException("Tenant is null or empty");
         
-        EmmaFornitori emmaFornitori = new EmmaFornitori()
-        {
-            descrizione = fornitore.descrizione,
-            riferimento =  fornitore.riferimento,
-            tenant =  tenant
-        };
-        return await _repository.UpdateAsync(emmaFornitori);
+        fornitore.tenant = tenant;
+        
+        return await _repository.UpdateAsync(fornitore);
+    }
+    
+    
+    public async Task<bool?> DeleteFornitoreAsync(EmmaFornitori fornitore)
+    {
+        var tenant = _connectionProvider.GetTenant();
+        if (string.IsNullOrWhiteSpace(tenant)) throw new ArgumentException("Tenant is null or empty");
+        
+        return await _repository.DeleteAsync(fornitore);
     }
 
     public async Task<EmmaFornitori?> GetFornitoreAsync(int id)

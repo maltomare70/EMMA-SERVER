@@ -38,6 +38,17 @@ public static class  FornitoreEndpoints
             })
             .WithName("UpdateFornitore");
         
+        
+        app.MapDelete("/api/fornitori", async (ClaimsPrincipal claims, [FromBody] EmmaFornitori fornitore, [FromServices] IFornitoriService fornitoriService) =>
+            {
+                if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+
+
+                var id = await fornitoriService.DeleteFornitoreAsync(fornitore);
+                return Results.Ok(id);
+            })
+            .WithName("DeleteFornitore");
+        
         app.MapGet("/api/fornitori", async (ClaimsPrincipal claims, [FromServices] IFornitoriService fornitoriService) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");

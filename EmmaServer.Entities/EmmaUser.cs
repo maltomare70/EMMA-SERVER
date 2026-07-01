@@ -8,12 +8,12 @@ namespace EmmaServer.Entities;
 public record EmmaUser : IEntity
 {
     [Dapper.Contrib.Extensions.Key]
-    public int id { get; init; }
+    public int id { get; set; }
     [Required]
     public string email { get; init; } = string.Empty;
     [Required]
     public string? pwd { get; init; } = string.Empty;
     [Write(false)] 
-    public DateTime data_creazione { get; init; } = DateTime.UtcNow;
+    public DateTime data_creazione { get; set; } = DateTime.UtcNow;
     public string? tenant { get; set; }
 }

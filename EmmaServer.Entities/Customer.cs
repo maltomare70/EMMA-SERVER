@@ -8,9 +8,9 @@ namespace EmmaServer.Entities;
 public record Customer : IEntity
 {
     [Dapper.Contrib.Extensions.Key]
-    public int id { get; init; }
+    public int id { get; set; }
     public string name { get; init; } = string.Empty;
     [Write(false)] 
-    public DateTime data_creazione { get; init; } = DateTime.UtcNow;
+    public DateTime data_creazione { get; set; } = DateTime.UtcNow;
 
 }
