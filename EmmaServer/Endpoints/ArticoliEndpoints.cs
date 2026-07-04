@@ -12,12 +12,12 @@ public static class ArticoliEndpoints
 {
     public static void MapArticoliRoutes(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/v1/articoli", async (
-                [FromServices] IArticoliService articoliService, ClaimsPrincipal claims) =>
+        app.MapGet("/api/articoli", async (
+                [FromServices] IArticoliService articoliService, [FromQuery] string fornitore, ClaimsPrincipal claims) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
                 
-                var articoli = await articoliService.GetAllTenantAsync();
+                var articoli = await articoliService.GetAllTenantAsync(fornitore);
                 
                 return articoli is not null
                     ? Results.Ok(articoli)

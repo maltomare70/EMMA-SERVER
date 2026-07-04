@@ -12,7 +12,7 @@ public interface IArticoliService
     Task<int?> AddArticoloAsync(EmmaArticoli articolo);
     Task<List<int?>> AddArticoliAsync(List<EmmaArticoli> articolo);
     Task<bool?> UpdateFornitoreAsync(EmmaArticoli articolo);
-    Task<IEnumerable<EmmaArticoli?>> GetAllTenantAsync();
+    Task<IEnumerable<EmmaArticoli?>> GetAllTenantAsync(string descrizione);
     Task AddOrUpdateArticoliByDocIdAsync(int docId, int idFornitore);
 
 
@@ -23,13 +23,14 @@ public class ArticoliService : IArticoliService
     private readonly IUserConnectionProvider _connectionProvider;
     private readonly IArticoliRepository _repository;
     private readonly IDocRepository _docRepository;
-    
+    private readonly IFornitoriService _fornitoriService;
     public ArticoliService(IUserConnectionProvider connectionProvider, 
-        IArticoliRepository  repository, IDocRepository  docRepository)
+        IArticoliRepository  repository, IDocRepository  docRepository, IFornitoriService fornitoriService)
     {
         _connectionProvider = connectionProvider;
         _repository = repository;
         _docRepository = docRepository;
+        _fornitoriService = fornitoriService;
     }
     
     public async  Task<EmmaArticoli?> GetArticoloAsync(int id)
@@ -81,12 +82,18 @@ public class ArticoliService : IArticoliService
         return await _repository.UpdateAsync(articolo);
     }
 
-    public async Task<IEnumerable<EmmaArticoli?>> GetAllTenantAsync()
+    public async Task<IEnumerable<EmmaArticoli?>> GetAllTenantAsync(string descrizione)
     {
         var tenant = _connectionProvider.GetTenant();
         if (string.IsNullOrWhiteSpace(tenant)) throw new ArgumentException("Tenant is null or empty");
         
-        return await _repository.GetAllTenantAsync(tenant);
+        var articoli = await _repository.GetAllTenantAsync(tenant);
+
+        var fornitori = await _fornitoriService.GetAllTenantAsync();
+        var fonritore = fornitori.FirstOrDefault(x => x!.descrizione.Equals(descrizione, StringComparison.InvariantCultureIgnoreCase));
+        var fornitoreId = fonritore?.id;
+        
+        return articoli.Where(x=> x.idfornitore == fornitoreId).ToList();
     }
 
 
