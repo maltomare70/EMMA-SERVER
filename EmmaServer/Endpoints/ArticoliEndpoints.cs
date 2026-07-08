@@ -24,6 +24,36 @@ public static class ArticoliEndpoints
                     : Results.NotFound($"Righe non trovate.");
             })
             .WithName("GetArticoli");
+        
+        app.MapPost("/api/articoli", async (ClaimsPrincipal claims, EmmaArticoli articolo, [FromServices] IArticoliService articoliService) =>
+            {
+                if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
 
+
+                var id = await articoliService.AddArticoloAsync(articolo);
+                return Results.Ok(id);
+            })
+            .WithName("AddArticolo");
+        
+        
+        app.MapPut("/api/articoli", async (ClaimsPrincipal claims, EmmaArticoli articolo, [FromServices] IArticoliService articoliService) =>
+            {
+                if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+
+
+                var id = await articoliService.UpdateArticoloAsync(articolo);
+                return Results.Ok(id);
+            })
+            .WithName("UpdateArticolo");
+        
+        app.MapDelete("/api/articoli", async (ClaimsPrincipal claims, [FromBody] EmmaArticoli articolo, [FromServices] IArticoliService articoliService) =>
+            {
+                if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+
+
+                var id = await articoliService.DeleteArticoloAsync(articolo);
+                return Results.Ok(id);
+            })
+            .WithName("DeleteArticolo");
     }
 }

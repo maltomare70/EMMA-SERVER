@@ -14,8 +14,8 @@ public interface IArticoliService
     Task<bool?> UpdateFornitoreAsync(EmmaArticoli articolo);
     Task<IEnumerable<EmmaArticoli?>> GetAllTenantAsync(string descrizione);
     Task AddOrUpdateArticoliByDocIdAsync(int docId, int idFornitore);
-
-
+    Task<bool?> DeleteArticoloAsync(EmmaArticoli articolo);
+    Task<bool?> UpdateArticoloAsync(EmmaArticoli articolo);
 }
 
 public class ArticoliService : IArticoliService
@@ -59,6 +59,16 @@ public class ArticoliService : IArticoliService
         return await _repository.AddAsync(emmaArticoli);
     }
 
+    public async Task<bool?> UpdateArticoloAsync(EmmaArticoli articolo)
+    {
+        var tenant = _connectionProvider.GetTenant();
+        if (string.IsNullOrWhiteSpace(tenant)) throw new ArgumentException("Tenant is null or empty");
+        
+        articolo.tenant = tenant;
+        
+        return await _repository.UpdateAsync(articolo);
+    }
+    
     public async Task<List<int?>> AddArticoliAsync(List<EmmaArticoli> articolo)
     {
         List<int?> list = new List<int?>();
@@ -96,7 +106,14 @@ public class ArticoliService : IArticoliService
         return articoli.Where(x=> x.idfornitore == fornitoreId).ToList();
     }
 
-
+    public async Task<bool?> DeleteArticoloAsync(EmmaArticoli articolo)
+    {
+        var tenant = _connectionProvider.GetTenant();
+        if (string.IsNullOrWhiteSpace(tenant)) throw new ArgumentException("Tenant is null or empty");
+        
+        return await _repository.DeleteAsync(articolo);
+    }
+    
     public async Task AddOrUpdateArticoliByDocIdAsync(int docId, int idFornitore)
     {
         var doc = await _docRepository.GetIdAsync(docId);
