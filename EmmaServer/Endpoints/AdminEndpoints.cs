@@ -32,5 +32,14 @@ public static class AdminEndpoints
                 return Results.Ok(hash);
             })
             .WithName("createPassword");
+        
+        app.MapPost("/api/database/test", async (ClaimsPrincipal claims,
+                [FromServices] IEmmaService emmaService) =>
+            {
+                await emmaService.TestAsync();
+                return Results.Ok();
+            })
+            .WithName("test");
+        
     }
 }

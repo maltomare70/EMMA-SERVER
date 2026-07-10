@@ -14,22 +14,42 @@ namespace EmmaServer.Repositories;
 public interface IEmmaRepository
 {
     Task InitializeAsync();
+    Task TestAsync();
 }
 
 
 public class EmmaRepository: IEmmaRepository
 {
     private readonly IUserConnectionProvider _connectionProvider;
-    public EmmaRepository(IUserConnectionProvider connectionProvider)
+    private readonly IConfiguration _configuration;
+    public EmmaRepository(IUserConnectionProvider connectionProvider, IConfiguration config)
     {
         _connectionProvider = connectionProvider;
+        _configuration = config;
 
     }
 
+    public async Task TestAsync()
+    {
+        string stringaDinamica = _connectionProvider.GetEmmaConnectionString();
+
+        using (var conn = new NpgsqlConnection(stringaDinamica))
+        {
+            // Se si blocca qui, la porta 5432 è probabilmente bloccata dal tuo provider internet o firewall
+            await conn.OpenAsync(); 
+        
+            // Fai una query di test per essere sicuro al 100%
+            using (var cmd = new NpgsqlCommand("SELECT 1", conn))
+            {
+                await cmd.ExecuteScalarAsync();
+            }
+        }
+    }
+    
+
     public async Task InitializeAsync()
     {
-        await CreateDatabaseIfNotExistsAsync();
-        //await CreateTablesAsync();
+        //await CreateDatabaseIfNotExistsAsync();
         await CreateTableFromClassAsync<EmmaTenant>();
         await CreateTableFromClassAsync<EmmaUser>();
         await CreateTableFromClassAsync<EmmaDoc>();
@@ -46,7 +66,7 @@ public class EmmaRepository: IEmmaRepository
 
     protected async Task<IDbConnection> CreaConnessione()
     {
-        await CreateDatabaseIfNotExistsAsync();
+        //await CreateDatabaseIfNotExistsAsync();
         string stringaDinamica = _connectionProvider.GetEmmaConnectionString();
         return new NpgsqlConnection(stringaDinamica);
     }

@@ -1,6 +1,7 @@
 namespace EmmaServer;
 
 using Microsoft.AspNetCore.Http;
+using Npgsql;
 using System.Security.Claims;
 
 public interface IUserConnectionProvider
@@ -24,13 +25,22 @@ public class UserConnectionProvider : IUserConnectionProvider
         _configuration =  configuration;
     }
     
+    
     public string GetEmmaConnectionString()
     {
-        var server = _configuration["Database:server"] ?? "localhost:5432";
-        var emma = _configuration["Database:Emma:Name"] ?? DATABASE_NAME;
-        var user = _configuration["Database:Emma:User"] ?? "emma";
-        var password = _configuration["Database:Emma:Password"] ?? "";
-        return $"Host={server};Username={user};Password={password};Database={emma}";
+        
+        var builder = new NpgsqlConnectionStringBuilder()
+        {
+            Host = _configuration["Database:Host"],
+            Database = _configuration["Database:Database"],
+            Username = _configuration["Database:UserName"],
+            Password = _configuration["Database:Password"],
+            SslMode = SslMode.Require,
+            TrustServerCertificate = true,
+            Timeout = 15
+        };
+
+        return builder.ConnectionString;
     }
     public string GetConnectionStringPostresSQL()
     {

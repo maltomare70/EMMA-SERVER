@@ -5,6 +5,7 @@ namespace EmmaServer.Services;
 public interface IEmmaService
 {
     Task InitAsync();
+    Task TestAsync();
 }
 
 public class EmmaService: IEmmaService
@@ -18,5 +19,10 @@ public class EmmaService: IEmmaService
     public async Task InitAsync()
     {
         await _emmaRepository.InitializeAsync();
+    }
+    
+    public async Task TestAsync()
+    {
+        await _emmaRepository.TestAsync();
     }
 }
