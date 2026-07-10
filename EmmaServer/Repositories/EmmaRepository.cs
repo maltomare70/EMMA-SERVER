@@ -77,7 +77,9 @@ public class EmmaRepository: IEmmaRepository
         var tableAttr = typeof(T).GetCustomAttribute<TableAttribute>();
         string tableName = tableAttr != null ? tableAttr.Name : typeof(T).Name;
 
-        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var proprietàDaEscludere = new[] { "IsDirty"};
+        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => !proprietàDaEscludere.Contains(p.Name)).ToArray();
         var columnDefinitions = new StringBuilder();
 
         foreach (var prop in properties)
