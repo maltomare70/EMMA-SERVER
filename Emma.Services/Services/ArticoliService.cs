@@ -6,6 +6,29 @@ using System.Net.Http.Json;
 
 namespace EmmaClientAv.Services;
 
+public static class ArticoliServiceManager
+{
+    public static string[] GetTipodocs()
+    {
+        return new string[] { 
+            "0. Tutti", 
+            "1. Ordine",
+            "2. DDT", 
+            "3. Fattura Accompagnatoria",
+            "4. Fattura",
+            "5. Nota di Accredito"
+        };
+    }
+
+    public static string[] GetStatodocs()
+    {
+        return new string[] { 
+            "0. Aperto", 
+            "1. Chiuso"
+        };
+    }
+}
+
 public interface IArticoliService
 {
     Task<List<EmmaArticoli>> GetArticoliFornitore(string descrizione);
@@ -30,6 +53,7 @@ public class ArticoliService : IArticoliService
         Client = new HttpClient();
     }
     
+
     public async  Task<List<EmmaArticoli>> GetArticoliFornitore(string descrizione)
     {
         string urlApi = $"{_url}/api/articoli?fornitore={descrizione}";
