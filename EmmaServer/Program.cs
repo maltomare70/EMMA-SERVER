@@ -64,6 +64,14 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddHttpClient("RenderService")
+    .AddStandardResilienceHandler(options =>
+    {
+        options.Retry.MaxRetryAttempts = 3;
+        options.Retry.Delay = TimeSpan.FromSeconds(5); // Wait 5 seconds between tries
+        options.Retry.BackoffType = Polly.DelayBackoffType.Exponential;
+    });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

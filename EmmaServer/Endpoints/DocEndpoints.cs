@@ -91,6 +91,40 @@ public static class DocEndpoints
             
         }).WithName("CambiaStato");
         
+        
+        ///to ping AI Service
+        app.MapGet("/api/health", async (
+            [FromServices] IHttpClientFactory httpClientFactory,
+            [FromServices] IConfiguration configuration) =>
+        {
+            var url = configuration["EMMA-AI:EndPoint"]; 
+            var externalApiUrl = $"{url}/api/health"; 
+    
+            using var request = new HttpRequestMessage(HttpMethod.Get, externalApiUrl);
+    
+            // Create the client configured with the retry policy
+            var client = httpClientFactory.CreateClient("RenderService");
+    
+            try
+            {
+                var response = await client.SendAsync(request);
+        
+                if (response.IsSuccessStatusCode)
+                {
+                    return Results.Ok(new { status = "Healthy", externalApi = "Online" });
+                }
+        
+                return Results.StatusCode((int)response.StatusCode);
+            }
+            catch (HttpRequestException)
+            {
+                // Fires if all retries fail because the external server didn't wake up in time
+                return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+            }
+        })
+        .WithName("health")
+        .DisableAntiforgery(); // FONDAMENTALE per client desktop come Avalonia
+        
         /// Endpoint per l'upload del file PDF e l'inoltro a un'API esterna
         app.MapPost("/api/v1/doc", async (IFormFile file, 
                 [FromServices] IHttpClientFactory httpClientFactory, 

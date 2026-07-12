@@ -13,6 +13,7 @@ public interface IDocService
     Task<bool> InviaAddAllApi(RigheDocumento riga);
     Task InviaModificaAllApi(ArticoloBolla articoloBolla);
     Task<bool> InviaEliminazioneAllApi(RigheDocumento riga);
+    Task<bool> PingAsync();
 }
 
 public class DocService :IDocService
@@ -30,7 +31,16 @@ public class DocService :IDocService
 
         Client = new HttpClient();
     }
-    
+
+    public async Task<bool> PingAsync()
+    {
+        string urlApi = $"{_url}/api/health";
+        using var request = new HttpRequestMessage(HttpMethod.Get, urlApi);
+        HttpResponseMessage response = await Client.SendAsync(request);
+        if (response.IsSuccessStatusCode) return true;
+        else return false;
+    }
+
     public async Task<List<EmmaDoc>> GetDocsAsync(EmmaDocFilters docFilters)
     {
         string urlApi = $"{_url}/api/v1/doc";
