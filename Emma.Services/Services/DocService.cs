@@ -32,9 +32,11 @@ public class DocService :IDocService
         Client = new HttpClient();
     }
 
+    //Serve per forzare l'avvio del server nella versione free
+    //poi questa chiamata va eliminata che non serve
     public async Task<bool> PingAsync()
     {
-        string urlApi = $"{_url}/api/health";
+        string urlApi = $"https://emma-aegc.onrender.com/api/health";
         using var request = new HttpRequestMessage(HttpMethod.Get, urlApi);
         HttpResponseMessage response = await Client.SendAsync(request);
         if (response.IsSuccessStatusCode) return true;
