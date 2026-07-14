@@ -7,7 +7,6 @@ using EmmaServer.Entities;
 using EmmaServer.Repositories;
 using EmmaServer.Services;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using System.Data;
 using System.Security.Claims;
@@ -45,7 +44,17 @@ builder.Services.AddScoped<IArticoliRepository, ArticoliRepository>();
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 
 
-EmailReaderOptions emailReaderOptions = new EmailReaderOptions();
+
+EmailReaderOptions emailReaderOptions = new EmailReaderOptions()
+{
+    AdminPassword = builder.Configuration["Admin:Password"],
+    ServerUrl = builder.Configuration["ImportBatch:Server"],
+    ImapServerUrl = builder.Configuration["ImportBatch:ImapServer"],
+    ImapServerPort = 993,
+    ImapUser = builder.Configuration["ImportBatch:ImapUser"],
+    ImapPassword = builder.Configuration["ImportBatch:ImapPassword"],
+
+};
 builder.Services.AddSingleton<IEmailReader>(sp => new EmailReader(emailReaderOptions));
 
 

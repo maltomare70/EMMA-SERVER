@@ -12,12 +12,12 @@ namespace Emma.Batches;
 
 public class EmailReaderOptions
 {
-    public string ServerUrl { get; set; } = "http://localhost:9111"; // "https://emma-server-uda8.onrender.com";
-    public string ImapServerUrl { get; set; } = "imap.gmail.com";
-    public int ImapServerPort { get; set; } = 993;
-    public string ImapUser { get; set; } =  "marco.altomare.1970@gmail.com";
-    public string ImapPassword { get; set; } = "tiuvdmhtmwyiaaas";
-    public string AdminPassword { get; set; } = "AQAAAAIAAYagAAAAEOMG9aBZxgqc7+/TZLetN6yaWzgO09WYBQWVkINHagn9q+UscKVcD6mmEGt057fxxw==";
+    public string? ServerUrl { get; set; }
+    public string? ImapServerUrl { get; set; }
+    public int ImapServerPort { get; set; }
+    public string? ImapUser { get; set; }
+    public string? ImapPassword { get; set; }
+    public string? AdminPassword { get; set; } 
 }
 
 public class InfoTenant
