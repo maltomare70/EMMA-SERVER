@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Net.Http.Json;
 
+
+
 namespace EmmaClientAv.Services;
 
 public interface IDocService
@@ -14,6 +16,7 @@ public interface IDocService
     Task InviaModificaAllApi(ArticoloBolla articoloBolla);
     Task<bool> InviaEliminazioneAllApi(RigheDocumento riga);
     Task<bool> PingAsync();
+    Task<DatiBolla?> InviaFileAsync(Stream fileStream, string fileName);
 }
 
 public class DocService :IDocService
@@ -204,6 +207,56 @@ public class DocService :IDocService
         catch
         {
             return false;
+        }
+    }
+    
+    public async Task<DatiBolla?> InviaFileAsync(Stream fileStream, string fileName)
+    {
+        string urlApi = $"{_url}/api/v1/doc";
+
+        using var client = new HttpClient();
+        using var content = new MultipartFormDataContent();
+        
+        // 1. Apriamo lo stream del file in lettura
+        using var streamContent = new StreamContent(fileStream);
+
+        // 2. Impostiamo l'header del tipo di contenuto (opzionale, ma consigliato)
+        streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+        // 3. Il nome del parametro ("file") DEVE corrispondere esattamente 
+        // al nome della variabile nell'API Python: `file: UploadFile`
+        content.Add(streamContent, "file", fileName);
+
+        // --- MODIFICA QUI: Creiamo l'oggetto HttpRequestMessage ---
+        using var request = new HttpRequestMessage(HttpMethod.Post, urlApi);
+
+        // Configura il contenuto (il file multipart)
+        request.Content = content;
+
+        // Aggiungi l'header personalizzato (puoi usare "OPENAI" o "GEMINI")
+        // request.Headers.Add("x-model", model); 
+        // request.Headers.Add("X-API-Key", "");
+        // ---------------------------------------------------------
+
+        // Codifica "username:password" in Base64
+        var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_user}:{_password}"));
+
+        // Aggiungi l'header Authorization nel formato "Basic [Token]"
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+
+        
+        // 4. Eseguiamo la chiamata POST in modo asincrono
+        HttpResponseMessage response = await client.SendAsync(request);
+        
+        // 5. Verifichiamo l'esito
+        if (response.IsSuccessStatusCode)
+        {
+            var ddt = await response.Content.ReadFromJsonAsync<DocResponse>().ConfigureAwait(false);
+            return ddt?.DdtResponse?.Document;
+        }
+        else
+        {
+            throw new Exception($"Errore durante l'invio: {response.StatusCode} {response.Content}");
         }
     }
 }
