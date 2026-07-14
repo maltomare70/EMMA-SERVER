@@ -1,14 +1,16 @@
+using Dapper;
+using Emma.Batches;
 using EmmaServer;
+using EmmaServer.Background;
+using EmmaServer.Endpoints;
+using EmmaServer.Entities;
 using EmmaServer.Repositories;
 using EmmaServer.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using System.Data;
-using Dapper;
-using EmmaServer.Endpoints;
-using EmmaServer.Entities;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +42,12 @@ builder.Services.AddScoped<IFornitoriRepository, FornitoriRepository>();
 builder.Services.AddScoped<IFornitoriService, FornitoriService>();
 builder.Services.AddScoped<IArticoliService, ArticoliService>();
 builder.Services.AddScoped<IArticoliRepository, ArticoliRepository>();
+builder.Services.AddScoped<ITenantRepository, TenantRepository>();
+
+
+EmailReaderOptions emailReaderOptions = new EmailReaderOptions();
+builder.Services.AddSingleton<IEmailReader>(sp => new EmailReader(emailReaderOptions));
+
 
 // 1. Registra la connessione al DB (o il tuo IUserConnectionProvider dinamico)
 builder.Services.AddScoped<IDbConnection>(sp => new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -53,6 +61,8 @@ builder.Services.AddAuthentication("BasicAuthentication")
 
 builder.Services.AddAuthorization();
 builder.Services.AddHttpClient();
+
+builder.Services.AddHostedService<ImportDocBackgroundService>();
 
 builder.Services.AddCors(options =>
 {

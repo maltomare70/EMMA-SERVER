@@ -4,3 +4,7 @@ EmmaServer/bin
 EmmaServer/obj
 EmmaServer.Entities/bin
 EmmaServer.Entities/obj
+Emma.Batches/obj
+Emma.Services/obj
+Emma.Batches/bin
+Emma.Services/bin
