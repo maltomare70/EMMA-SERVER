@@ -15,4 +15,5 @@ public record EmmaTenant: IEntity
     public string? descrizione { get; init; } = string.Empty;
     [Write(false)] 
     public DateTime data_creazione { get; set; }= DateTime.UtcNow;
+    public string? mail_from { get; set; } = string.Empty;
 }

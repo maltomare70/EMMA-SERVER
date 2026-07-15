@@ -53,11 +53,17 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
 
             if (username.Equals("admin", StringComparison.InvariantCultureIgnoreCase) && password == _adminPassword)
             {
+                string tenant_code = string.Empty;
+                if (!Request.Headers.ContainsKey("x-tenant"))
+                    tenant_code = "emma"; // Or your default tenant identifier
+                else
+                    tenant_code = Request.Headers["x-tenant"].ToString();
+                
                 // Se valido, creiamo l'identità dell'utente
                 var claims = new[] {
                     new Claim(ClaimTypes.Name, username),
                     new Claim("database_name", "emma"),
-                    new Claim("tenant", "emma")
+                    new Claim("tenant", tenant_code)
                 };
 
                 var identity = new ClaimsIdentity(claims, Scheme.Name);

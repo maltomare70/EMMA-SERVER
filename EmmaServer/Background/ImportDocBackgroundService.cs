@@ -33,11 +33,7 @@ public class ImportDocBackgroundService : BackgroundService
             {
                 try
                 {
-                    
-
                     await _emailReader.ExecuteAsync();
-                    
-
                 }
                 catch (Exception ex)
                 {
