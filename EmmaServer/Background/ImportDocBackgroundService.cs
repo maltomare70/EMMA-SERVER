@@ -32,15 +32,16 @@ public class ImportDocBackgroundService : BackgroundService
             if (await IsReadyToRun())
             {
                 try
-                {
+                { 
                     await _emailReader.ExecuteAsync();
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                 }
                 finally
                 {
-                    await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
+                    await Task.Delay(TimeSpan.FromMinutes(3), stoppingToken);
                 }
             }
         }
