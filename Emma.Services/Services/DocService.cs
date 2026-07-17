@@ -26,11 +26,13 @@ public class DocService :IDocService
     private readonly string _url;
     private readonly string _user;
     private readonly string _password;
-    public DocService(string url, string user, string password)
+    private readonly string _tenant;
+    public DocService(string url, string user, string password, string tenant = "")
     {
         _url = url;
         _user = user;
         _password = password;
+        _tenant= tenant;
 
         Client = new HttpClient();
     }
@@ -238,12 +240,14 @@ public class DocService :IDocService
         // request.Headers.Add("X-API-Key", "");
         // ---------------------------------------------------------
 
+
+        
         // Codifica "username:password" in Base64
         var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_user}:{_password}"));
 
         // Aggiungi l'header Authorization nel formato "Basic [Token]"
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
-
+        if (!string.IsNullOrWhiteSpace(_tenant)) request.Headers.Add("x-tenant", _tenant); 
         
         // 4. Eseguiamo la chiamata POST in modo asincrono
         HttpResponseMessage response = await client.SendAsync(request);

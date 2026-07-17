@@ -20,12 +20,7 @@ public class EmailReaderOptions
     public string? AdminPassword { get; set; } 
 }
 
-public class InfoTenant
-{
-    public string? Name { get; set; }
-    public string? User { get; set; }
-    public string? Password { get; set; }
-}
+
 
 public interface IEmailReader
 {
@@ -81,8 +76,10 @@ public class EmailReader : IEmailReader
                 foreach (var uid in uids)
                 {
                     var message = inbox.GetMessage(uid);
-                    await ProcessMessage(message, emma_url);
-                    inbox.AddFlags(uid, MessageFlags.Seen, true);
+                    if (await ProcessMessage(message, emma_url, tenants))
+                    {
+                        inbox.AddFlags(uid, MessageFlags.Seen, true);
+                    }
                 }
 
                 client.Disconnect(true);
@@ -94,31 +91,30 @@ public class EmailReader : IEmailReader
         }
     }
 
-    private async Task ProcessMessage(MimeMessage message, string emma_url)
+    private async Task<bool> ProcessMessage(MimeMessage message, string emma_url, List<EmmaTenant> tenants)
     {        
         Console.WriteLine($"Data: {message.Date.UtcDateTime}");
         Console.WriteLine($"Da: {message.From}");
         Console.WriteLine($"Oggetto: {message.Subject}");
 
+       
         //queste info le otteniamo dal message.From che devono essere collegate
         //in maniera univoca al tenant
-        InfoTenant tenantInfo = new();
+        EmmaTenant? tenant = null;
         string mittenteEmail = string.Empty;
         if (message.From.Count > 0 && message.From[0] is MailboxAddress mailboxAddress)
         {
             // .Address restituisce solo "esempio@dominio.com"
             mittenteEmail = mailboxAddress.Address;
-            tenantInfo = await GetInfoTenant(mittenteEmail);
+            tenant = tenants.FirstOrDefault(x => x.mail_from.Equals(mittenteEmail, StringComparison.InvariantCultureIgnoreCase));
         }
 
-        if (tenantInfo is null) return;
-
-        string emma_user = tenantInfo.User;
-        string emma_pwd = tenantInfo.Password;
+        if (tenant is null) return false;
+        
 
         // Se vuoi leggere il testo del corpo del messaggio:
         // Console.WriteLine($"Testo: {message.TextBody}");
-        IDocService docService = new DocService(emma_url, emma_user, emma_pwd);
+        IDocService docService = new DocService(emma_url, "admin", _emailReaderOptions.AdminPassword, tenant.codice);
 
         foreach (var attachment in message.Attachments)
         {
@@ -134,24 +130,12 @@ public class EmailReader : IEmailReader
                     Console.WriteLine($"Allegato '{mimePart.FileName}' caricato in memoria come Stream. Dimensione: {memoryStream.Length} byte");
 
                     DatiBolla? datiBolla = await docService.InviaFileAsync(memoryStream, fileName);
-
-                   
+                    
                 }
             }
 
         }
 
-        
-    }
-
-    private async Task<InfoTenant> GetInfoTenant(string emailFrom)
-    {
-        //TODO
-        return new InfoTenant()
-        {
-            Name = "002",
-            User = "marco.altomare.1970@gmail.com",
-            Password = "nocafla"
-        };
+        return true;
     }
 }
