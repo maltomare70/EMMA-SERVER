@@ -153,7 +153,7 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
 
         // 1. Base query and static conditions
         var sqlBuilder = new StringBuilder(@"
-        SELECT id, file_name, data_creazione, content, tenant, stato 
+        SELECT id, file_name, data_creazione, content, tenant, stato , allegato
         FROM docs 
         WHERE tenant = @Tenant ");
 

@@ -10,6 +10,7 @@ public class MasterDocumento
     public string? StatoDocumento { get; set; }
     public string TestoBottone => StatoDocumento == "Aperto" ? "Chiudi" : "Apri";
     public string? TipDocumento { get; set; }
+    public byte[]? Allegato { get; set; }
     public ObservableCollection<RigheDocumento> Dettagli { get; set; } = new ObservableCollection<RigheDocumento>();
     
  
