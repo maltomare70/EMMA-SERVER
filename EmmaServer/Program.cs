@@ -8,6 +8,7 @@ using EmmaServer.Repositories;
 using EmmaServer.Services;
 using Microsoft.AspNetCore.Authentication;
 using Npgsql;
+using Scalar.AspNetCore;
 using System.Data;
 using System.Security.Claims;
 
@@ -97,6 +98,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(); // <-- Aggiungi questa riga
 }
 
 app.UseHttpsRedirection();
