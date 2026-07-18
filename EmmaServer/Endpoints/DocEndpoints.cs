@@ -130,19 +130,23 @@ public static class DocEndpoints
                 [FromServices] IHttpClientFactory httpClientFactory, 
                 [FromServices] IConfiguration configuration,
                 [FromServices] IDocService docService,
+                [FromServices] ILogService logService,
                 ClaimsPrincipal claims) =>
         {
              if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
              
-             string tenant = claims.FindFirstValue("tenant");
-             
+            string? tenant = claims.FindFirstValue("tenant");
+            if (string.IsNullOrWhiteSpace(tenant)) return Results.BadRequest("No tenant.");
+
             // 1. Validate that a file was actually uploaded
             if (file.Length == 0) return Results.BadRequest("No file was uploaded.");
 
             // 2. Validate that the file is a PDF
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (extension != ".pdf") return Results.BadRequest("Only PDF files are allowed.");
-            
+
+            DdtResponse? ddtResponse = null;
+
             try
             {
                 var file_byte = await FileHelper.ConvertFormFileToByteArray(file);
@@ -187,7 +191,7 @@ public static class DocEndpoints
                     var responseContent = await response.Content.ReadAsStringAsync();
                     // 3. Deserializza la stringa nell'oggetto DatiBolla
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    DdtResponse? ddtResponse = JsonSerializer.Deserialize<DdtResponse>(responseContent, options);
+                    ddtResponse = JsonSerializer.Deserialize<DdtResponse>(responseContent, options);
                     
                     //Salvo sul database
                     int? idDoc = 0;
@@ -206,28 +210,72 @@ public static class DocEndpoints
                         idDoc = await docService.AddDocAsync(emmaDocFilters , 
                              responseContent,
                             ddtResponse.FileName ?? string.Empty, file_byte, tenant);
+
+                        //**************
+                        //LOG SUCCESS AI
+                        //**************
+                        await logService.AddAsync(new EmmaLog()
+                        {
+                            stato = 1,
+                            tenant = tenant,
+                            token_input = ddtResponse.Costs.PromptTokens,
+                            token_output = ddtResponse.Costs.OutputTokens,
+                            token_tot = ddtResponse.Costs.TotalTokens,
+                            cost = ddtResponse.Costs.TotalCostEur,
+                            message = idDoc.ToString()
+                        });
+
+                        ////--------------------------------------------------------------------------------
+                        //Aggiorna Anagrafiche
+                        //--------------------------------------------------------------------------------
+                        if (idDoc is not null) await AggiornaAnagrafiche(docService, idDoc.Value);
+                        ////--------------------------------------------------------------------------------
                     }
-                    
-                    //--------------------------------------------------------
-                    //Aggiorna Anagrafiche
-                    //--------------------------------------------------------
-                   await AggiornaAnagrafiche(docService,  idDoc.Value);
-                   //--------------------------------------------------------
-                   
+
                     return Results.Ok(new DocResponse()
                     {
-                        DocId = idDoc.Value,
+                        DocId = idDoc is not null ? idDoc.Value : 0,
                         DdtResponse =  ddtResponse,
                     });
                 }
                 else
                 {
+                    //**************
+                    //LOG ERRORE AI
+                    //**************
+
+                    await logService.AddAsync(new EmmaLog()
+                    {
+                        stato = -1,
+                        tenant = tenant,
+                        token_input = ddtResponse?.Costs?.PromptTokens ?? 0,
+                        token_output = ddtResponse?.Costs?.OutputTokens ?? 0,
+                        token_tot = ddtResponse?.Costs?.TotalTokens ?? 0,
+                        cost = ddtResponse?.Costs?.TotalCostEur ?? 0,
+                        message = $"{response.StatusCode} - {response.Content}"
+                    });
+
                     return Results.Problem($"Internal server error: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
             {
-                // Log the exception in real production code
+                //**************
+                //LOG ERRORE SERVER
+                //**************
+                
+
+                await logService.AddAsync(new EmmaLog()
+                {
+                    stato = -2,
+                    tenant = tenant,
+                    token_input = ddtResponse?.Costs?.PromptTokens ?? 0,
+                    token_output = ddtResponse?.Costs?.OutputTokens ?? 0,
+                    token_tot = ddtResponse?.Costs?.TotalTokens ?? 0,
+                    cost = ddtResponse?.Costs?.TotalCostEur ?? 0,
+                    message = ex.Message
+                });
+
                 return Results.Problem($"Internal server error: {ex.Message}");
             }
         })

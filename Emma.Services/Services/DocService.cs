@@ -99,12 +99,14 @@ public class DocService :IDocService
 
     public async Task CancellaDocumento(MasterDocumento masterDocumento)
     {
+        ArgumentNullException.ThrowIfNull(masterDocumento);
+
         EmmaDocFilters emmaDocFilters = new()
         {
-            Fornitore =  masterDocumento.Fornitore,
-            NumeroDoc = masterDocumento.NumeroDocumento,
-            DataDoc = masterDocumento.DataDocumento,
-            TipoDoc = GetTipoDocumento(masterDocumento.TipDocumento),
+            Fornitore =  masterDocumento.Fornitore ?? string.Empty,
+            NumeroDoc = masterDocumento.NumeroDocumento ?? string.Empty,
+            DataDoc = masterDocumento.DataDocumento ?? string.Empty,
+            TipoDoc = GetTipoDocumento(masterDocumento.TipDocumento ?? string.Empty),
             Stato = masterDocumento.StatoDocumento == "Aperto" ? 0 : 1
         };
         
@@ -133,12 +135,12 @@ public class DocService :IDocService
         articoloBolla.Id_Master = riga.IdMaster;
         articoloBolla.Id_Riga = Guid.NewGuid().ToString();
         articoloBolla.Quantita = riga.Qta;
-        articoloBolla.Descrizione = riga.DescrizioneArticolo;
-        articoloBolla.Codice = riga.CodiceArticolo;
+        articoloBolla.Descrizione = riga.DescrizioneArticolo ?? string.Empty;
+        articoloBolla.Codice = riga.CodiceArticolo ?? string.Empty;
         articoloBolla.Imponibile = riga.Imponibile;
         articoloBolla.Totale = riga.Totale;
-        articoloBolla.UnitaMisura = riga.UnitaMisura;
-        articoloBolla.Iva = riga.IVA;
+        articoloBolla.UnitaMisura = riga.UnitaMisura ?? string.Empty;
+        articoloBolla.Iva = riga.IVA ?? string.Empty;
     
         string urlApi = $"{_url}/api/v1/doc/riga";
         using var request = new HttpRequestMessage(HttpMethod.Post, urlApi);
@@ -183,12 +185,12 @@ public class DocService :IDocService
             articoloBolla.Id_Master = riga.IdMaster;
             articoloBolla.Id_Riga = riga.IdRiga;
             articoloBolla.Quantita = riga.Qta;
-            articoloBolla.Descrizione = riga.DescrizioneArticolo;
-            articoloBolla.Codice = riga.CodiceArticolo;
+            articoloBolla.Descrizione = riga.DescrizioneArticolo ?? string.Empty;
+            articoloBolla.Codice = riga.CodiceArticolo ?? string.Empty;
             articoloBolla.Imponibile = riga.Imponibile;
             articoloBolla.Totale = riga.Totale;
-            articoloBolla.UnitaMisura = riga.UnitaMisura;
-            articoloBolla.Iva = riga.IVA;
+            articoloBolla.UnitaMisura = riga.UnitaMisura ?? string.Empty;
+            articoloBolla.Iva = riga.IVA ?? string.Empty;
         
             string urlApi = $"{_url}/api/v1/doc/riga";
             using var request = new HttpRequestMessage(HttpMethod.Delete, urlApi);
@@ -239,8 +241,6 @@ public class DocService :IDocService
         // request.Headers.Add("x-model", model); 
         // request.Headers.Add("X-API-Key", "");
         // ---------------------------------------------------------
-
-
         
         // Codifica "username:password" in Base64
         var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_user}:{_password}"));

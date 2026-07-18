@@ -101,7 +101,13 @@ public class DocService : IDocService
         if (doclist?.Count > 0)
         {
             var doc = doclist.FirstOrDefault();
-            if (doc is not null) await DeleteAsync(doc);
+            if (doc is not null)
+            {
+                if (doc.stato == 0)
+                    await DeleteAsync(doc);
+                else
+                    throw new Exception($"Documento {doc.ToDoc()?.TipoDocumento} - {doc.ToDoc()?.Mittente} - {doc.ToDoc()?.NumeroBolla} - {doc.ToDoc()?.DataBolla} già chiuso");                                    
+            }
         }
 
         //inserisco

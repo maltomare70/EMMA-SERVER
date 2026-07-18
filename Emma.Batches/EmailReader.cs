@@ -114,7 +114,7 @@ public class EmailReader : IEmailReader
 
         // Se vuoi leggere il testo del corpo del messaggio:
         // Console.WriteLine($"Testo: {message.TextBody}");
-        IDocService docService = new DocService(emma_url, "admin", _emailReaderOptions.AdminPassword, tenant.codice);
+        IDocService docService = new DocService(emma_url, "admin", _emailReaderOptions!.AdminPassword!, tenant.codice);
 
         foreach (var attachment in message.Attachments)
         {
@@ -124,7 +124,7 @@ public class EmailReader : IEmailReader
 
                 using (var memoryStream = new MemoryStream())
                 {
-                    mimePart.Content.DecodeTo(memoryStream);
+                    mimePart.Content?.DecodeTo(memoryStream);
                     memoryStream.Position = 0;
 
                     Console.WriteLine($"Allegato '{mimePart.FileName}' caricato in memoria come Stream. Dimensione: {memoryStream.Length} byte");

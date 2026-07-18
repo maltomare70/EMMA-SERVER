@@ -43,6 +43,8 @@ builder.Services.AddScoped<IFornitoriService, FornitoriService>();
 builder.Services.AddScoped<IArticoliService, ArticoliService>();
 builder.Services.AddScoped<IArticoliRepository, ArticoliRepository>();
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
+builder.Services.AddScoped<ILogRepository, LogRepository>();
+builder.Services.AddScoped<ILogService, LogService>();
 
 
 
@@ -110,6 +112,7 @@ app.MapDocRoutes();
 app.MapAdminRoutes();
 app.MapFornitoreRoutes();
 app.MapArticoliRoutes();
+app.MapLogsRoutes();
 
 app.UseCors("AllowAll");
 app.UseAuthentication();

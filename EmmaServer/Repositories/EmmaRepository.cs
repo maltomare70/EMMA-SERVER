@@ -55,6 +55,7 @@ public class EmmaRepository: IEmmaRepository
         await CreateTableFromClassAsync<EmmaDoc>();
         await CreateTableFromClassAsync<EmmaFornitori>();
         await CreateTableFromClassAsync<EmmaArticoli>();
+        await CreateTableFromClassAsync<EmmaLog>();
     }
     
 
