@@ -11,6 +11,8 @@ public interface IUserService
     Task<int?> AddUserAsync(EmmaUser user);
     Task<bool?> UpdateUserAsync(EmmaUser user);
     Task<EmmaUser?> GetUserByEmailAsync(string email);
+
+    Task<int> CambiaPasswordAsync(CambiaPasswordRequest cambiaPasswordRequest);
 }
 
 public class UserService : IUserService
@@ -67,4 +69,10 @@ public class UserService : IUserService
     {
         return await _repoUser.GetAllTenantAsync(tenant);
     }
+
+    public async Task<int> CambiaPasswordAsync(CambiaPasswordRequest cambiaPasswordRequest)
+    {
+        return await _repoUser.CambiaPasswordAsync(cambiaPasswordRequest);
+    }
+
 }

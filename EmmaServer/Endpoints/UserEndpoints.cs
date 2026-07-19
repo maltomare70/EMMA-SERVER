@@ -1,6 +1,8 @@
 using EmmaServer.Entities;
+using EmmaServer.Helpers;
 using EmmaServer.Services;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Asn1.Ocsp;
 using System.Security.Claims;
 
 namespace EmmaServer.Endpoints;
@@ -72,5 +74,17 @@ public static class UserEndpoints
                     : Results.NotFound($"Utente con email {email} non trovato.");
             })
             .WithName("GetUserByEmail");
+
+        app.MapPut("/api/users/password", async(ClaimsPrincipal claims, CambiaPasswordRequest cambiaPassword, [FromServices] IUserService userService) =>
+        {
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+
+            var hash = PasswordHelper.GeneraHash(cambiaPassword.newPassword);
+            cambiaPassword.hash = hash;
+            var ret = await userService.CambiaPasswordAsync(cambiaPassword);
+
+            return Results.Ok(ret);
+        })
+        .WithName("ChangePassword");
     }
 }
