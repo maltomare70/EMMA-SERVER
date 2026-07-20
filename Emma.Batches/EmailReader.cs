@@ -31,6 +31,8 @@ public class EmailReader : IEmailReader
 {
     private readonly EmailReaderOptions? _emailReaderOptions;
     private readonly List<EmmaTenant>? _tenants;
+
+    private static bool WIP;
     public EmailReader (EmailReaderOptions emailReaderOptions )
     {
         _emailReaderOptions = emailReaderOptions;
@@ -40,10 +42,18 @@ public class EmailReader : IEmailReader
 
     public async Task ExecuteAsync()
     {
+        if (WIP)
+        {
+            Console.WriteLine("Elaborazione ancora in corso");
+            return;
+        }    
+       
         using (var client = new ImapClient())
         {
             try
             {
+                //Inizio Elabprazione
+                WIP = true;
                 string? emma_url = _emailReaderOptions?.ServerUrl;
 
                 TenantServiceClient tenantServiceClient = new TenantServiceClient(emma_url, "admin", _emailReaderOptions.AdminPassword);
@@ -51,10 +61,10 @@ public class EmailReader : IEmailReader
                 
 
                 // Configurazione dei dati di accesso
-                string imapServer = _emailReaderOptions?.ImapServerUrl;
+                string? imapServer = _emailReaderOptions?.ImapServerUrl;
                 int port = _emailReaderOptions.ImapServerPort; // Porta standard per IMAP su SSL
-                string email = _emailReaderOptions.ImapUser;
-                string password = _emailReaderOptions.ImapPassword; // NON la password normale
+                string? email = _emailReaderOptions.ImapUser;
+                string? password = _emailReaderOptions.ImapPassword; // NON la password normale
 
                 client.Connect(imapServer, port, true);
                 client.Authenticate(email, password);
@@ -87,6 +97,11 @@ public class EmailReader : IEmailReader
             catch (Exception ex)
             {
                 Console.WriteLine($"Errore durante la lettura della posta: {ex.Message}");
+            }
+            finally
+            {
+                //Fine Elabprazione
+                WIP = false;
             }
         }
     }

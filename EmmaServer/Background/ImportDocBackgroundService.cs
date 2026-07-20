@@ -1,9 +1,4 @@
 ﻿using Emma.Batches;
-using Emma.Services.Services;
-using EmmaServer.Entities;
-using EmmaServer.Repositories;
-using EmmaServer.Services;
-
 
 namespace EmmaServer.Background;
 

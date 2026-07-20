@@ -124,6 +124,7 @@ public class ArticoliService : IArticoliService
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             DdtResponse? ddtResponse = JsonSerializer.Deserialize<DdtResponse>(doc.content!, options);
             var articoli = ddtResponse?.Document.Articoli;
+            if (articoli is null) return;
             
             var listaArticoli = await _repository.GetAllTenantByFornitoreAsync(tenant, idFornitore);
             
