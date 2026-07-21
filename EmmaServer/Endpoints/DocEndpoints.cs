@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Security.Claims;
+using System.Threading;
+using System.Diagnostics;
 
 namespace EmmaServer.Endpoints;
 
@@ -149,6 +151,8 @@ public static class DocEndpoints
 
             try
             {
+                Stopwatch stopwatch = Stopwatch.StartNew();
+
                 var file_byte = await FileHelper.ConvertFormFileToByteArray(file);
                 
                 //Access the file stream directly (e.g., to upload to AWS S3, Azure Blob, or database)
@@ -185,7 +189,11 @@ public static class DocEndpoints
                 request.Headers.Add("X-API-Key", apiKey);
                 
                 var response = await client.SendAsync(request);
-                
+
+
+                stopwatch.Stop();
+                long secondiInteri = stopwatch.ElapsedMilliseconds / 1000;
+
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
@@ -222,7 +230,8 @@ public static class DocEndpoints
                             token_output = ddtResponse.Costs.OutputTokens,
                             token_tot = ddtResponse.Costs.TotalTokens,
                             cost = ddtResponse.Costs.TotalCostEur,
-                            message = idDoc.ToString()
+                            message = idDoc.ToString(),
+                            duration = secondiInteri
                         });
 
                         ////--------------------------------------------------------------------------------
@@ -252,7 +261,8 @@ public static class DocEndpoints
                         token_output = ddtResponse?.Costs?.OutputTokens ?? 0,
                         token_tot = ddtResponse?.Costs?.TotalTokens ?? 0,
                         cost = ddtResponse?.Costs?.TotalCostEur ?? 0,
-                        message = $"{response.StatusCode} - {response.Content}"
+                        message = $"{response.StatusCode} - {response.Content}",
+                        duration = secondiInteri
                     });
 
                     return Results.Problem($"Internal server error: {response.StatusCode}");
@@ -273,7 +283,8 @@ public static class DocEndpoints
                     token_output = ddtResponse?.Costs?.OutputTokens ?? 0,
                     token_tot = ddtResponse?.Costs?.TotalTokens ?? 0,
                     cost = ddtResponse?.Costs?.TotalCostEur ?? 0,
-                    message = ex.Message
+                    message = ex.Message,
+                    duration = 0
                 });
 
                 return Results.Problem($"Internal server error: {ex.Message}");

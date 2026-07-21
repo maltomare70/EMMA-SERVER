@@ -22,4 +22,6 @@ public class EmmaLog : IEntity
     public int stato { get; set; } = 0;
 
     public string? message { get; set; } = string.Empty;
+
+    public long duration { get; set; } = 0;
 }
