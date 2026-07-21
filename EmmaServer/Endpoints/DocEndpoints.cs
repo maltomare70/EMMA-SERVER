@@ -16,6 +16,15 @@ public static class DocEndpoints
     // Questo metodo accetta l'app e registra le rotte al suo interno
     public static void MapDocRoutes(this IEndpointRouteBuilder app)
     {
+        app.MapDelete("/api/v1/doc/clean", async (
+          [FromServices] IDocService docService, ClaimsPrincipal claims) =>
+        {
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+
+            await docService.CleanDocAsync();
+            return Results.Ok();
+        }).WithName("CleanDocs");
+
         //una volta salvato il documento
         //si allineano le anagrafiche Forniori e Articoli
         //questa api è per test

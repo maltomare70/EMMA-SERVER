@@ -17,6 +17,7 @@ public interface IDocService
     Task<bool> InviaEliminazioneAllApi(RigheDocumento riga);
     Task<bool> PingAsync();
     Task<DatiBolla?> InviaFileAsync(Stream fileStream, string fileName);
+    Task CleanDocs();
 }
 
 public class DocService :IDocService
@@ -262,5 +263,14 @@ public class DocService :IDocService
         {
             throw new Exception($"Errore durante l'invio: {response.StatusCode} {response.Content}");
         }
+    }
+
+    public async Task   CleanDocs()
+    {
+        string urlApi = $"{_url}/api/v1/doc/clean";
+        using var request = new HttpRequestMessage(HttpMethod.Delete, urlApi);
+        var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_user}:{_password}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+        HttpResponseMessage response = await Client.SendAsync(request);
     }
 }

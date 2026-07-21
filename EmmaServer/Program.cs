@@ -60,6 +60,7 @@ EmailReaderOptions emailReaderOptions = new EmailReaderOptions()
 };
 builder.Services.AddSingleton<IEmailReader>(sp => new EmailReader(emailReaderOptions));
 
+builder.Services.AddSingleton<ICleanDocs>(sp => new CleanDocs(emailReaderOptions));
 
 // 1. Registra la connessione al DB (o il tuo IUserConnectionProvider dinamico)
 builder.Services.AddScoped<IDbConnection>(sp => new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -75,6 +76,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpClient();
 
 builder.Services.AddHostedService<ImportDocBackgroundService>();
+builder.Services.AddHostedService<CleanDataBackgroundService>();
 
 builder.Services.AddCors(options =>
 {

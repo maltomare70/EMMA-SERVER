@@ -20,6 +20,8 @@ public interface IDocService
     Task<bool> UpdateAsync(EmmaDoc doc);
     Task CambiaStatoAsync(CambioStato cambioStato);
     Task DeleteDocAsync(EmmaDocFilters emmaDocFilter);
+
+    Task<int> CleanDocAsync();
 }
 
 public class DocService : IDocService
@@ -118,5 +120,10 @@ public class DocService : IDocService
             allegato = file_byte,
             tenant = tenant
         }));
+    }
+
+    public async Task<int> CleanDocAsync()
+    {
+        return await _repo.CleanDocAsync();
     }
 }

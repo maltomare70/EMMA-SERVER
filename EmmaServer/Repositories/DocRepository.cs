@@ -14,6 +14,7 @@ public interface IDocRepository: IRepositoryGenerico<EmmaDoc>
     Task DeleteRigaDocAsync(ArticoloBolla articoloBolla);
     
     Task CambiaStatoAsync(CambioStato cambioStato);
+    Task<int> CleanDocAsync();
 }
 
 public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
@@ -219,5 +220,31 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
         
         using var db = await CreaConnessione();
         var ret = await db.ExecuteAsync(sqlBuilder.ToString(), parametri);
+    }
+
+    /// <summary>
+    /// Servizio in background che cancella i documenti chiusi con data superiore ai 30gg
+    /// Servizio in background che cancella i documenti aperti con data superiore ai 180gg
+    /// </summary>
+    /// <returns></returns>
+    public async Task<int> CleanDocAsync()
+    {
+        var sql = """
+            DELETE FROM docs 
+            WHERE stato = 1 
+              AND data_creazione < NOW() - INTERVAL '30 days'
+            """;
+        using var db = await CreaConnessione();
+        var ret = await db.ExecuteAsync(sql);
+
+        sql = """
+            DELETE FROM docs 
+            WHERE stato = 0 
+              AND data_creazione < NOW() - INTERVAL '180 days'
+            """;
+
+        ret = ret + await db.ExecuteAsync(sql);
+
+        return ret;
     }
 }
