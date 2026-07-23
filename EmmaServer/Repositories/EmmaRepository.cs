@@ -129,6 +129,24 @@ public class EmmaRepository: IEmmaRepository
         await db.ExecuteAsync(sql);
 
         Console.WriteLine($"Tabella '{tableName}' creata o verificata con successo.");
+
+        //Creazione Indici
+        await CreateIndexAsync(tableName);
+    }
+
+    private async Task CreateIndexAsync(string tableName)
+    {
+        if (tableName.Equals("tenants", StringComparison.InvariantCultureIgnoreCase))
+        {
+            string sql = """
+                CREATE UNIQUE INDEX tenant_emailfrom 
+                ON tenants (mail_from) 
+                WHERE mail_from IS NOT NULL;
+
+                """;
+            using var db = await CreaConnessione();
+            await db.ExecuteAsync(sql);
+        }
     }
 
     private static string MapCsharpTypeToPostgres(Type type, string columnName)
