@@ -106,6 +106,7 @@
             transition: all 0.2s ease;
             cursor: pointer;
             border: none;
+            text-align: center;
         }
 
         .btn-primary {
@@ -176,6 +177,16 @@
             display: flex;
             justify-content: center;
             gap: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .download-note {
+            display: block;
+            font-size: 12px;
+            color: var(--dark-muted);
+            margin-top: 6px;
+            font-weight: normal;
         }
 
         /* Section Title */
@@ -429,6 +440,13 @@
             color: var(--white);
         }
 
+        .footer-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
         .footer-bottom {
             text-align: center;
             padding-top: 32px;
@@ -465,7 +483,7 @@
                     <li><a href="#conciliazione">3-Way Matching</a></li>
                     <li><a href="#vantaggi">Perché EMMA</a></li>
                 </ul>
-                <a href="#contatti" class="btn btn-primary">Richiedi Demo</a>
+                <a href="mailto:emma@gmail.com?subject=Richiesta%20Demo%20EMMA&body=Buongiorno,%20vorrei%20richiedere%20una%20demo%20personalizzata%20della%20piattaforma%20EMMA." class="btn btn-primary">Richiedi Demo</a>
             </nav>
         </div>
     </header>
@@ -479,7 +497,11 @@
             <h1>Trasforma i documenti statici in <span>informazioni dinamiche</span></h1>
             <p>Alimenta l'ecosistema digitale della tua azienda. EMMA elimina l'inserimento manuale dei dati, accelera i processi di verifica e ottimizza i flussi operativi.</p>
             <div class="hero-cta">
-                <a href="#contatti" class="btn btn-primary">Inizia Ora</a>
+                <a href="mailto:emma@gmail.com?subject=Richiesta%20Demo%20EMMA&body=Buongiorno,%20vorrei%20richiedere%20una%20demo%20personalizzata%20della%20piattaforma%20EMMA." class="btn btn-primary">Richiedi Demo</a>
+                <a href="https://drive.google.com/file/d/1kgGOfoLanYaYzNJTKgYuPeIlLLDCszDk/view?usp=sharing" target="_blank" class="btn btn-secondary">
+                    🪟 Scarica Client Windows 11
+                    <span class="download-note">Richiede .NET 10 installato</span>
+                </a>
                 <a href="#come-funziona" class="btn btn-secondary">Scopri il Flusso</a>
             </div>
         </div>
@@ -624,8 +646,11 @@
                     <div class="footer-logo">EMMA</div>
                     <p style="color: #94A3B8; margin-top: 8px;">Piattaforma documentale intelligente con AI</p>
                 </div>
-                <div>
-                    <a href="#" class="btn btn-primary">Richiedi una Demo Personalizzata</a>
+                <div class="footer-actions">
+                    <a href="https://drive.google.com/file/d/1kgGOfoLanYaYzNJTKgYuPeIlLLDCszDk/view?usp=sharing" target="_blank" class="btn btn-secondary">
+                        🪟 Client Windows 11 (.NET 10)
+                    </a>
+                    <a href="mailto:emma@gmail.com?subject=Richiesta%20Demo%20EMMA&body=Buongiorno,%20vorrei%20richiedere%20una%20demo%20personalizzata%20della%20piattaforma%20EMMA." class="btn btn-primary">Richiedi una Demo Personalizzata</a>
                 </div>
             </div>
             <div class="footer-bottom">
