@@ -120,8 +120,13 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
+
+// Enable serving static files (like index.html)
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 //Test
-app.MapGet("/", () => "Hello");
+//app.MapGet("/", () => "Hello");
 
 app.MapPost("/api/v1/auth", (ClaimsPrincipal claims) =>
     {

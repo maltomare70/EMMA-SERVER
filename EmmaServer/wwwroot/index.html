@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMMA | Piattaforma Documentale AI</title>
+    <style>
+        /* Modern CSS Reset & Variables */
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --primary-light: #EEF2FF;
+            --secondary: #0EA5E9;
+            --accent: #10B981;
+            --dark: #0F172A;
+            --dark-muted: #334155;
+            --light-bg: #F8FAFC;
+            --white: #FFFFFF;
+            --border: #E2E8F0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header / Navbar */
+        header {
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .logo span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark-muted);
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--white);
+            color: var(--dark);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 96px 0 64px;
+            text-align: center;
+            background: radial-gradient(circle at 50% 0%, #EEF2FF 0%, var(--light-bg) 70%);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            margin-bottom: 24px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero h1 span {
+            color: var(--primary);
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--dark-muted);
+            max-width: 720px;
+            margin: 0 auto 40px;
+        }
+
+        .hero-cta {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        /* Section Title */
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 64px;
+        }
+
+        .section-header h2 {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 16px;
+        }
+
+        .section-header p {
+            font-size: 18px;
+            color: var(--dark-muted);
+        }
+
+        /* Flow Section */
+        .flow-section {
+            padding: 96px 0;
+            background-color: var(--white);
+        }
+
+        .flow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 32px;
+            position: relative;
+        }
+
+        .flow-card {
+            background-color: var(--light-bg);
+            border: 1px solid var(--border);
+            padding: 32px 24px;
+            border-radius: var(--radius-lg);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .flow-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-light);
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            background-color: var(--primary);
+            color: var(--white);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+            margin-bottom: 24px;
+        }
+
+        .flow-card h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .flow-card p {
+            color: var(--dark-muted);
+            font-size: 15px;
+        }
+
+        /* Key Feature Section - 3 Way Matching */
+        .matching-section {
+            padding: 96px 0;
+            background-color: var(--light-bg);
+        }
+
+        .matching-card {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            color: var(--white);
+            border-radius: 24px;
+            padding: 64px 48px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .matching-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: center;
+        }
+
+        .matching-text h2 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .matching-text p {
+            color: #94A3B8;
+            font-size: 17px;
+            margin-bottom: 32px;
+        }
+
+        .matching-pillars {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .pillar-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+        }
+
+        .pillar-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .matching-visual {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            text-align: center;
+        }
+
+        .visual-badge {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .visual-box {
+            background: #1E293B;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: left;
+        }
+
+        .visual-box-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .status-ok {
+            color: #34D399;
+        }
+
+        .status-alert {
+            color: #F87171;
+        }
+
+        /* Benefits Section */
+        .benefits-section {
+            padding: 96px 0;
+            background-color: var(--white);
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+
+        .benefit-card {
+            padding: 40px 32px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            background-color: var(--white);
+            transition: all 0.3s ease;
+        }
+
+        .benefit-card:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .benefit-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 24px;
+        }
+
+        .benefit-card h3 {
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        .benefit-card p {
+            color: var(--dark-muted);
+            font-size: 16px;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: var(--white);
+            padding: 64px 0 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .footer-logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--white);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #64748B;
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 38px;
+            }
+            .matching-content {
+                grid-template-columns: 1fr;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <header>
+        <div class="container">
+            <nav>
+                <a href="#" class="logo">
+                    <span>EMMA</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="#come-funziona">Come Funziona</a></li>
+                    <li><a href="#conciliazione">3-Way Matching</a></li>
+                    <li><a href="#vantaggi">Perché EMMA</a></li>
+                </ul>
+                <a href="#contatti" class="btn btn-primary">Richiedi Demo</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="badge">
+                ✨ Piattaforma Documentale AI di Nuova Generazione
+            </div>
+            <h1>Trasforma i documenti statici in <span>informazioni dinamiche</span></h1>
+            <p>Alimenta l'ecosistema digitale della tua azienda. EMMA elimina l'inserimento manuale dei dati, accelera i processi di verifica e ottimizza i flussi operativi.</p>
+            <div class="hero-cta">
+                <a href="#contatti" class="btn btn-primary">Inizia Ora</a>
+                <a href="#come-funziona" class="btn btn-secondary">Scopri il Flusso</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Flow Section (Come Funziona) -->
+    <section id="come-funziona" class="flow-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Come Funziona</h2>
+                <p>Un flusso di dati fluido e automatizzato dall'acquisizione fino all'integrazione nei tuoi gestionali.</p>
+            </div>
+
+            <div class="flow-grid">
+                <!-- Step 1 -->
+                <div class="flow-card">
+                    <div class="step-number">1</div>
+                    <h3>Acquisizione Intelligente</h3>
+                    <p>Acquisizione automatica di documenti PDF da diverse sorgenti: email, upload manuali o cartelle condivise.</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="flow-card">
+                    <div class="step-number">2</div>
+                    <h3>Analisi Semantica con AI</h3>
+                    <p>Supera i limiti dell'OCR a template fisso. L'AI legge, comprende ed estrae dati rilevanti da tabelle, importi e anagrafiche.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="flow-card">
+                    <div class="step-number">3</div>
+                    <h3>Database Proprietario e Sicuro</h3>
+                    <p>I dati vengono strutturati e salvati in un database sicuro, garantendo conservazione ordinata e tracciabilità totale.</p>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="flow-card">
+                    <div class="step-number">4</div>
+                    <h3>Integrazione Dinamica</h3>
+                    <p>Sincronizzazione immediata con CRM ed ERP aziendali grazie ad API e connettori nativi. Nessun dato resta isolato.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Feature: Conciliazione (3-Way Matching) -->
+    <section id="conciliazione" class="matching-section">
+        <div class="container">
+            <div class="matching-card">
+                <div class="matching-content">
+                    <div class="matching-text">
+                        <h2>Conciliazione Ordini, Bolle e Fatture</h2>
+                        <p>Il punto di forza di EMMA è l'interfaccia intuitiva di riconciliazione (3-Way Matching), che incrocia automaticamente le righe dei documenti e rileva le discrepanze in pochi clic.</p>
+                        
+                        <div class="matching-pillars">
+                            <div class="pillar-item">
+                                <div class="pillar-icon">📦</div>
+                                <div>
+                                    <strong>Ordini</strong>
+                                    <div style="font-size: 13px; color: #94A3B8;">Acquisto e Vendita</div>
+                                </div>
+                            </div>
+                            <div class="pillar-item">
+                                <div class="pillar-icon">🚚</div>
+                                <div>
+                                    <strong>Bolle di Consegna (DDT)</strong>
+                                    <div style="font-size: 13px; color: #94A3B8;">Verifica Quantità e Articoli</div>
+                                </div>
+                            </div>
+                            <div class="pillar-item">
+                                <div class="pillar-icon">📄</div>
+                                <div>
+                                    <strong>Fatture</strong>
+                                    <div style="font-size: 13px; color: #94A3B8;">Elettroniche e di Cortesia</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="matching-visual">
+                        <div class="visual-badge">⚡ Riconciliazione Automatica Attiva</div>
+                        
+                        <div class="visual-box">
+                            <div class="visual-box-header">
+                                <span>Cod. Articolo #A-892</span>
+                                <span class="status-ok">✓ Corrispondenza Perfetta</span>
+                            </div>
+                            <div style="font-size: 13px; color: #94A3B8;">Ordine: 100 pz | DDT: 100 pz | Fattura: € 1.200</div>
+                        </div>
+
+                        <div class="visual-box" style="border-color: rgba(239, 68, 68, 0.3);">
+                            <div class="visual-box-header">
+                                <span>Cod. Articolo #B-104</span>
+                                <span class="status-alert">⚠️ Discrepanza Rilevata</span>
+                            </div>
+                            <div style="font-size: 13px; color: #94A3B8;">DDT: 80 pz ricevuti vs Ordine: 100 pz. Evidenziato per risoluzione rapida.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section (Perché Scegliere EMMA) -->
+    <section id="vantaggi" class="benefits-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Perché Scegliere EMMA?</h2>
+                <p>I principali vantaggi per ottimizzare la gestione documentale della tua azienda.</p>
+            </div>
+
+            <div class="benefits-grid">
+                <!-- Benefit 1 -->
+                <div class="benefit-card">
+                    <div class="benefit-icon">🎯</div>
+                    <h3>Zero Errori Umani</h3>
+                    <p>Elimina definitivamente le sviste e gli errori di battitura tipici del data-entry manuale.</p>
+                </div>
+
+                <!-- Benefit 2 -->
+                <div class="benefit-card">
+                    <div class="benefit-icon">⚡</div>
+                    <h3>Massima Efficienza</h3>
+                    <p>Riduci drasticamente i tempi di gestione del ciclo passivo e attivo, liberando risorse preziose.</p>
+                </div>
+
+                <!-- Benefit 3 -->
+                <div class="benefit-card">
+                    <div class="benefit-icon">🔗</div>
+                    <h3>Ecosistema Connesso</h3>
+                    <p>Fa comunicare i documenti direttamente con i software gestionali (ERP e CRM) già in uso.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contatti">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <div class="footer-logo">EMMA</div>
+                    <p style="color: #94A3B8; margin-top: 8px;">Piattaforma documentale intelligente con AI</p>
+                </div>
+                <div>
+                    <a href="#" class="btn btn-primary">Richiedi una Demo Personalizzata</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2026 EMMA. Tutti i diritti riservati.
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
