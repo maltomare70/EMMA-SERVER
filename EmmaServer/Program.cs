@@ -123,7 +123,20 @@ app.UseAuthorization();
 
 // Enable serving static files (like index.html)
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        // Controlla se la richiesta è per il file index.html (o per la root del sito)
+        if (ctx.File.Name.Equals("index.html", StringComparison.OrdinalIgnoreCase))
+        {
+            // Imposta gli header HTTP per evitare qualsiasi tipo di cache
+            ctx.Context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            ctx.Context.Response.Headers["Pragma"] = "no-cache";
+            ctx.Context.Response.Headers["Expires"] = "0";
+        }
+    }
+});
 
 //Test
 //app.MapGet("/", () => "Hello");
