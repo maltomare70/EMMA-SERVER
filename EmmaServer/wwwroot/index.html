@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EMMA | Piattaforma Documentale AI</title>
 
-
     <!-- Disabilita la cache lato HTML -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-
 
     <style>
         /* Modern CSS Reset & Variables */
@@ -377,15 +375,65 @@
             color: #F87171;
         }
 
-        /* Benefits Section */
-        .benefits-section {
+        /* SDK Section */
+        .sdk-section {
             padding: 96px 0;
             background-color: var(--white);
         }
 
+        .sdk-card {
+            background: var(--light-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 64px 48px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: center;
+        }
+
+        .sdk-text h2 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .sdk-text p {
+            color: var(--dark-muted);
+            font-size: 17px;
+            margin-bottom: 24px;
+        }
+
+        .sdk-code-block {
+            background: #0F172A;
+            color: #38BDF8;
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            font-family: "Courier New", Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            box-shadow: var(--shadow-md);
+            overflow-x: auto;
+        }
+
+            .sdk-code-block .keyword {
+                color: #F43F5E;
+            }
+
+            .sdk-code-block .type {
+                color: #34D399;
+            }
+
+        /* Benefits Section */
+        .benefits-section {
+            padding: 96px 0;
+            background-color: var(--light-bg);
+        }
+
         .benefits-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 32px;
         }
 
@@ -462,7 +510,7 @@
                 font-size: 38px;
             }
 
-            .matching-content {
+            .matching-content, .sdk-card {
                 grid-template-columns: 1fr;
             }
 
@@ -484,9 +532,10 @@
                 <ul class="nav-links">
                     <li><a href="#come-funziona">Come Funziona</a></li>
                     <li><a href="#conciliazione">3-Way Matching</a></li>
+                    <li><a href="#sdk">SDK e Connettori</a></li>
                     <li><a href="#vantaggi">Perché EMMA</a></li>
                 </ul>
-                <a href="mailto:emma@gmail.com?subject=Richiesta%20Demo%20EMMA&body=Buongiorno,%20vorrei%20richiedere%20una%20demo%20personalizzata%20della%20piattaforma%20EMMA." class="btn btn-primary">Richiedi Demo</a>
+                <a href="mailto:emma@gmail.com?subject=Richiesta%20Credenziali%20EMMA&body=Buongiorno,%0A%0AVorrei%20richiedere%20le%20credenziali%20di%20accesso.%0A%0A---%20DATI%20RICHIEDENTE%20---%0ANome%20e%20Cognome:%20%0ARagione%20Sociale:%20%0AEmail:%20%0ATelefono:%20%0AReferente/Contatto:%20%0A%0AGrazie,%0ACordiali%20saluti." class="btn btn-primary">Richiedi Credenziali</a>
             </nav>
         </div>
     </header>
@@ -548,6 +597,13 @@
                     <div class="step-number">4</div>
                     <h3>Integrazione Dinamica</h3>
                     <p>Sincronizzazione immediata con CRM ed ERP aziendali grazie ad API e connettori nativi. Nessun dato resta isolato.</p>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="flow-card">
+                    <div class="step-number">5</div>
+                    <h3>Estensibilità Personalizzata</h3>
+                    <p>Sviluppa e adatta facilmente la piattaforma secondo le tue esigenze custom grazie all'SDK completo fornito ai team Dev.</p>
                 </div>
             </div>
         </div>
@@ -611,6 +667,29 @@
         </div>
     </section>
 
+    <!-- SDK Section -->
+    <section id="sdk" class="sdk-section">
+        <div class="container">
+            <div class="sdk-card">
+                <div class="sdk-text">
+                    <h2>SDK Dedicato e Interamente Documentato</h2>
+                    <p>Hai gestionali proprietari o architetture custom? EMMA include un comodo SDK ricco di librerie, esempi pratici e documentazione dettagliata per consentire al tuo team IT di sviluppare ed estendere connettori su misura in totale autonomia.</p>
+                    <a href="#contatti" class="btn btn-secondary">Richiedi Documentazione Dev</a>
+                </div>
+                <div class="sdk-code-block">
+                    <span class="keyword">var</span> docService = <span class="keyword">new</span> <span class="type">DocService</span>(...);<br>
+                    <span class="keyword">var</span> docFilters = <span class="keyword">new</span> <span class="type">EmmaDocFilters</span>()<br>
+                    {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Stato = &lt;STATO&gt;,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;TipoDoc = &lt;TIPO&gt;,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Fornitore = &lt;FORNITORE&gt;<br>
+                    };<br>
+                    <span class="keyword">var</span> docs = <span class="keyword">await</span> docService.GetDocsAsync(docFilters);
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Benefits Section (Perché Scegliere EMMA) -->
     <section id="vantaggi" class="benefits-section">
         <div class="container">
@@ -631,7 +710,7 @@
                 <div class="benefit-card">
                     <div class="benefit-icon">⚡</div>
                     <h3>Massima Efficienza</h3>
-                    <p>Riduci drasticamente i tempi di gestione del ciclo passivo e attivo, liberando risorse preziose.</p>
+                    <p>Riduci drasticamente i tempi di gestione del ciclo passivo, liberando risorse preziose.</p>
                 </div>
 
                 <!-- Benefit 3 -->
@@ -639,6 +718,13 @@
                     <div class="benefit-icon">🔗</div>
                     <h3>Ecosistema Connesso</h3>
                     <p>Fa comunicare i documenti direttamente con i software gestionali (ERP e CRM) già in uso.</p>
+                </div>
+
+                <!-- Benefit 4 -->
+                <div class="benefit-card">
+                    <div class="benefit-icon">🛠️</div>
+                    <h3>SDK & Personalizzazione</h3>
+                    <p>Crea connettori custom in modo semplice e veloce con il nostro SDK completamente documentato.</p>
                 </div>
             </div>
         </div>
