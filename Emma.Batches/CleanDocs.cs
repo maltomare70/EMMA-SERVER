@@ -1,5 +1,6 @@
 ﻿
 using EmmaClientAv.Services;
+using EmmaServer.Entities;
 
 namespace Emma.Batches;
 
@@ -24,8 +25,11 @@ public class CleanDocs : ICleanDocs
                 //Inizio Elabprazione
                 string? emma_url = _emailReaderOptions?.ServerUrl;
 
-                DocService docServiceClient = new DocService(emma_url, "admin", _emailReaderOptions.AdminPassword);
-                await docServiceClient.CleanDocs();
+                if (!string.IsNullOrWhiteSpace(emma_url))
+                {
+                    DocService docServiceClient = new DocService(emma_url, EmmaAdmin.ADMIN, _emailReaderOptions?.AdminPassword!);
+                    await docServiceClient.CleanDocs();
+                }
 
             }
             catch (Exception ex)

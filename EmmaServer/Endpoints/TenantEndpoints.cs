@@ -15,7 +15,7 @@ public static class TenantEndpoints
                 async (ClaimsPrincipal claims, EmmaTenant tenant, [FromServices] ITenantService tenantService) =>
                 {
                     if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                    if (claims.Identity?.Name?.ToLower() != "admin") return Results.Unauthorized();
+                    if (claims.Identity?.Name?.ToLower() != EmmaAdmin.ADMIN) return Results.Unauthorized();
 
                     var id = await tenantService.AddTenantAsync(tenant);
                     return Results.Ok(id);
@@ -26,7 +26,7 @@ public static class TenantEndpoints
         app.MapGet("/api/tenants", async (ClaimsPrincipal claims, [FromServices] ITenantService tenantService) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                if (claims.Identity?.Name?.ToLower() != "admin") return Results.Unauthorized();
+                if (claims.Identity?.Name?.ToLower() != EmmaAdmin.ADMIN) return Results.Unauthorized();
 
                 var tenants = await tenantService.GetAllAsync();
                 return Results.Ok(tenants);
@@ -38,7 +38,7 @@ public static class TenantEndpoints
         app.MapGet("/api/tenants/{id:int}", async (ClaimsPrincipal claims, int id, [FromServices] ITenantService tenantService) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                if (claims.Identity?.Name?.ToLower() != "admin") return Results.Unauthorized();
+                if (claims.Identity?.Name?.ToLower() != EmmaAdmin.ADMIN) return Results.Unauthorized();
                 
                 var tenant = await tenantService.GetTenantAsync(id);
 
@@ -54,7 +54,7 @@ public static class TenantEndpoints
                 async (ClaimsPrincipal user, EmmaTenant tenant, [FromServices] ITenantService tenantService) =>
                 {
                     if (user.Identity == null || !user.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                    if (user.Identity?.Name?.ToLower() != "admin") return Results.Unauthorized();
+                    if (user.Identity?.Name?.ToLower() != EmmaAdmin.ADMIN) return Results.Unauthorized();
 
                     var id = await tenantService.UpdateTenantAsync(tenant);
                     return Results.Ok(id);

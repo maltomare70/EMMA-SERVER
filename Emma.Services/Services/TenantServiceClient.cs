@@ -1,6 +1,4 @@
 ﻿using EmmaServer.Entities;
-using System;
-using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
@@ -43,7 +41,7 @@ public class TenantServiceClient: ITenantServiceClient
 
         if (response.IsSuccessStatusCode)
         {
-            return await response.Content.ReadFromJsonAsync<List<EmmaTenant>>();
+            return await response.Content.ReadFromJsonAsync<List<EmmaTenant>>() ?? new List<EmmaTenant>();
 
         }
         else

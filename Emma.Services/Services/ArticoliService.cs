@@ -64,12 +64,8 @@ public class ArticoliService : IArticoliService
         if (response.IsSuccessStatusCode)
         {
             var emmaArticoliList = await response.Content.ReadFromJsonAsync<List<EmmaArticoli>>().ConfigureAwait(false);
-            if (emmaArticoliList != null)
-            {
-                emmaArticoliList =  emmaArticoliList.OrderBy(x => x.descrizione).ToList();
-            }
-
-            return emmaArticoliList;
+            if (emmaArticoliList != null) emmaArticoliList =  emmaArticoliList.OrderBy(x => x.descrizione).ToList();
+            return emmaArticoliList ?? new List<EmmaArticoli>();
         }
         else
         {
@@ -86,11 +82,7 @@ public class ArticoliService : IArticoliService
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
         request.Content = JsonContent.Create(articolo);
         HttpResponseMessage response = await Client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
-        {
-            //
-        }
-        else
+        if (!response.IsSuccessStatusCode)
         {
             string errorContent = await response.Content.ReadAsStringAsync();
             throw new ApplicationException(errorContent); 
@@ -105,11 +97,7 @@ public class ArticoliService : IArticoliService
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
         request.Content = JsonContent.Create(articolo);
         HttpResponseMessage response = await Client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
-        {
-            //
-        }
-        else
+        if (!response.IsSuccessStatusCode)
         {
             string errorContent = await response.Content.ReadAsStringAsync();
             throw new ApplicationException(errorContent); 
@@ -124,11 +112,7 @@ public class ArticoliService : IArticoliService
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
         request.Content = JsonContent.Create(articolo);
         HttpResponseMessage response = await Client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
-        {
-            //
-        }
-        else
+        if (!response.IsSuccessStatusCode)
         {
             string errorContent = await response.Content.ReadAsStringAsync();
             throw new ApplicationException(errorContent); 

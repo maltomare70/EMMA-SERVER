@@ -72,27 +72,38 @@ public class DocService :IDocService
 
     public async Task CambioStato(MasterDocumento masterDocumento)
     {
+        // 1. Guard Clause per evitare invii di payload invalidi
+        ArgumentNullException.ThrowIfNull(masterDocumento);
+
         string urlApi = $"{_url}/api/v1/doc/stato";
         using var request = new HttpRequestMessage(HttpMethod.Post, urlApi);
+
+        // 2. Autenticazione Basic
         var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_user}:{_password}"));
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
-        request.Content = JsonContent.Create(new CambioStato()
+
+        // 3. Payload
+        var payload = new CambioStato
         {
             Id = masterDocumento.Id,
-            Stato = masterDocumento.StatoDocumento == "Aperto" ? 1 : 0
-        });
+            Stato = string.Equals(masterDocumento.StatoDocumento, "Aperto", StringComparison.OrdinalIgnoreCase) ? 1 : 0
+        };
+        request.Content = JsonContent.Create(payload);
+
+        // 4. Esecuzione richiesta
         HttpResponseMessage response = await Client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
-        {
-            //
-        }
-        else
+
+        // 5. Gestione errori robusta
+        if (!response.IsSuccessStatusCode)
         {
             string errorContent = await response.Content.ReadAsStringAsync();
-            throw new ApplicationException(errorContent); 
+
+            throw new HttpRequestException(
+                $"Errore durante il cambio stato del documento {masterDocumento.Id}. " +
+                $"Status: {response.StatusCode}. Dettagli: {errorContent}");
         }
     }
-    
+
     private int GetTipoDocumento(string tipodoc)
     {
         return int.Parse(tipodoc);
@@ -131,7 +142,8 @@ public class DocService :IDocService
     
     public async Task<bool> InviaAddAllApi(RigheDocumento riga)
     {
-     
+        ArgumentNullException.ThrowIfNull(riga);
+
         var articoloBolla = new ArticoloBolla();
         articoloBolla.Id_Master = riga.IdMaster;
         articoloBolla.Id_Riga = Guid.NewGuid().ToString();
@@ -162,6 +174,8 @@ public class DocService :IDocService
     
     public async Task InviaModificaAllApi(ArticoloBolla articoloBolla)
     {
+        ArgumentNullException.ThrowIfNull(articoloBolla);
+
         string urlApi = $"{_url}/api/v1/doc/riga";
         using var request = new HttpRequestMessage(HttpMethod.Put, urlApi);
         var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_user}:{_password}"));

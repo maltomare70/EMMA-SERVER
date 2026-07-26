@@ -52,47 +52,50 @@ public class EmailReader : IEmailReader
         {
             try
             {
-                //Inizio Elabprazione
-                WIP = true;
                 string? emma_url = _emailReaderOptions?.ServerUrl;
 
-                TenantServiceClient tenantServiceClient = new TenantServiceClient(emma_url, "admin", _emailReaderOptions.AdminPassword);
-                var tenants = await tenantServiceClient.GetsAsync();
-                
-
-                // Configurazione dei dati di accesso
-                string? imapServer = _emailReaderOptions?.ImapServerUrl;
-                int port = _emailReaderOptions.ImapServerPort; // Porta standard per IMAP su SSL
-                string? email = _emailReaderOptions.ImapUser;
-                string? password = _emailReaderOptions.ImapPassword; // NON la password normale
-
-                client.Connect(imapServer, port, true);
-                client.Authenticate(email, password);
-
-                // 3. Apertura della cartella principale (In arrivo / Inbox)
-                // Usiamo FolderAccess.ReadOnly se dobbiamo solo leggere, evita blocchi
-                var inbox = client.Inbox;
-                inbox.Open(FolderAccess.ReadWrite);
-
-                var uids = inbox.Search(SearchQuery.NotSeen);
-
-                // Console.WriteLine($"Totale messaggi in Inbox: {inbox.Count}");
-
-                // 4. Cerchiamo gli ultimi 10 messaggi (o usiamo un filtro di ricerca)
-                // In questo esempio prendiamo gli ul                                                                                                                                                                                                                                                                                                                                                                                           timi 10 partendo dalla fine
-                //int startIndex = Math.Max(0, inbox.Count - 10);
-
-                //for (int i = inbox.Count - 1; i >= startIndex; i--)
-                foreach (var uid in uids)
+                if (!string.IsNullOrWhiteSpace(emma_url))
                 {
-                    var message = inbox.GetMessage(uid);
-                    if (await ProcessMessage(message, emma_url, tenants))
-                    {
-                        inbox.AddFlags(uid, MessageFlags.Seen, true);
-                    }
-                }
+                    //Inizio Elabprazione
+                    WIP = true;
 
-                client.Disconnect(true);
+                    TenantServiceClient tenantServiceClient = new TenantServiceClient(emma_url, EmmaAdmin.ADMIN, _emailReaderOptions?.AdminPassword!);
+                    var tenants = await tenantServiceClient.GetsAsync();
+
+                    // Configurazione dei dati di accesso
+                    string? imapServer = _emailReaderOptions?.ImapServerUrl;
+                    int port = _emailReaderOptions.ImapServerPort; // Porta standard per IMAP su SSL
+                    string? email = _emailReaderOptions.ImapUser;
+                    string? password = _emailReaderOptions.ImapPassword; // NON la password normale
+
+                    client.Connect(imapServer, port, true);
+                    client.Authenticate(email, password);
+
+                    // 3. Apertura della cartella principale (In arrivo / Inbox)
+                    // Usiamo FolderAccess.ReadOnly se dobbiamo solo leggere, evita blocchi
+                    var inbox = client.Inbox;
+                    inbox.Open(FolderAccess.ReadWrite);
+
+                    var uids = inbox.Search(SearchQuery.NotSeen);
+
+                    // Console.WriteLine($"Totale messaggi in Inbox: {inbox.Count}");
+
+                    // 4. Cerchiamo gli ultimi 10 messaggi (o usiamo un filtro di ricerca)
+                    // In questo esempio prendiamo gli ul                                                                                                                                                                                                                                                                                                                                                                                           timi 10 partendo dalla fine
+                    //int startIndex = Math.Max(0, inbox.Count - 10);
+
+                    //for (int i = inbox.Count - 1; i >= startIndex; i--)
+                    foreach (var uid in uids)
+                    {
+                        var message = inbox.GetMessage(uid);
+                        if (await ProcessMessage(message, emma_url, tenants))
+                        {
+                            inbox.AddFlags(uid, MessageFlags.Seen, true);
+                        }
+                    }
+
+                    client.Disconnect(true);
+                }
             }
             catch (Exception ex)
             {
@@ -129,7 +132,7 @@ public class EmailReader : IEmailReader
 
         // Se vuoi leggere il testo del corpo del messaggio:
         // Console.WriteLine($"Testo: {message.TextBody}");
-        IDocService docService = new DocService(emma_url, "admin", _emailReaderOptions!.AdminPassword!, tenant.codice);
+        IDocService docService = new DocService(emma_url, EmmaAdmin.ADMIN, _emailReaderOptions!.AdminPassword!, tenant.codice);
 
         foreach (var attachment in message.Attachments)
         {

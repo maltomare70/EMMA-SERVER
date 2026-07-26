@@ -57,11 +57,7 @@ public class FornitoriService : IFornitoriService
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
         request.Content = JsonContent.Create(fornitore);
         HttpResponseMessage response = await Client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
-        {
-            //
-        }
-        else
+        if (!response.IsSuccessStatusCode)
         {
             string errorContent = await response.Content.ReadAsStringAsync();
             throw new ApplicationException(errorContent); 
@@ -76,11 +72,7 @@ public class FornitoriService : IFornitoriService
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
         request.Content = JsonContent.Create(fornitore);
         HttpResponseMessage response = await Client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
-        {
-            //
-        }
-        else
+        if (!response.IsSuccessStatusCode)
         {
             string errorContent = await response.Content.ReadAsStringAsync();
             throw new ApplicationException(errorContent); 
@@ -95,11 +87,7 @@ public class FornitoriService : IFornitoriService
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
         request.Content = JsonContent.Create(fornitore);
         HttpResponseMessage response = await Client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
-        {
-            //
-        }
-        else
+        if (!response.IsSuccessStatusCode)
         {
             string errorContent = await response.Content.ReadAsStringAsync();
             throw new ApplicationException(errorContent); 

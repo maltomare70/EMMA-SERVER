@@ -16,7 +16,7 @@ public static class UserEndpoints
         app.MapPost("/api/users", async (ClaimsPrincipal claims, EmmaUser user, [FromServices] IUserService userService) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                if (claims.Identity?.Name?.ToLower() != "admin") return Results.Unauthorized();
+                if (claims.Identity?.Name?.ToLower() != EmmaAdmin.ADMIN) return Results.Unauthorized();
 
                 var id = await userService.AddUserAsync(user);
                 return Results.Ok(id);
@@ -27,7 +27,7 @@ public static class UserEndpoints
         app.MapPut("/api/users", async (ClaimsPrincipal claims, EmmaUser user, [FromServices] IUserService userService) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                if (claims.Identity?.Name?.ToLower() != "admin") return Results.Unauthorized();
+                if (claims.Identity?.Name?.ToLower() != EmmaAdmin.ADMIN) return Results.Unauthorized();
                 
                 var id = await userService.UpdateUserAsync(user);
                 return Results.Ok(id);
@@ -38,7 +38,7 @@ public static class UserEndpoints
         app.MapGet("/api/users", async (ClaimsPrincipal claims, string tenant, HttpContext httpContext, [FromServices] IUserService userService) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                if (claims.Identity?.Name?.ToLower() != "admin") return Results.Unauthorized();
+                if (claims.Identity?.Name?.ToLower() != EmmaAdmin.ADMIN) return Results.Unauthorized();
 
                 var users = await userService.GetAllTenantAsync(tenant);
                 return Results.Ok(users);
@@ -49,7 +49,7 @@ public static class UserEndpoints
         app.MapGet("/api/users/{id:int}", async (ClaimsPrincipal claims, int id, [FromServices] IUserService userService) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                if (claims.Identity?.Name?.ToLower() != "admin") return Results.Unauthorized();
+                if (claims.Identity?.Name?.ToLower() != EmmaAdmin.ADMIN) return Results.Unauthorized();
                 
                 var user = await userService.GetUserAsync(id);
 
@@ -64,7 +64,7 @@ public static class UserEndpoints
         app.MapGet("/api/users/email/{email}", async (ClaimsPrincipal claims, string email, [FromServices] IUserService userService) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                if (claims.Identity?.Name?.ToLower() != "admin") return Results.Unauthorized();
+                if (claims.Identity?.Name?.ToLower() != EmmaAdmin.ADMIN) return Results.Unauthorized();
                 
                 var user = await userService.GetUserByEmailAsync(email);
 

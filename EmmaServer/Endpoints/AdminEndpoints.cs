@@ -18,7 +18,7 @@ public static class AdminEndpoints
                 [FromServices] IEmmaService emmaService) =>
             {
                 if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-                if (claims.Identity?.Name?.ToLower() != "admin") return Results.Unauthorized();
+                if (claims.Identity?.Name?.ToLower() != EmmaAdmin.ADMIN) return Results.Unauthorized();
                 
                 await emmaService.InitAsync();
                 return Results.Ok();
