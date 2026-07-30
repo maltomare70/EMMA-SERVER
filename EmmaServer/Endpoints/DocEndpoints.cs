@@ -136,12 +136,10 @@ public static class DocEndpoints
         .WithName("health")
         .DisableAntiforgery(); // FONDAMENTALE per client desktop come Avalonia
         
+
         /// Endpoint per l'upload del file PDF e l'inoltro a un'API esterna
         app.MapPost("/api/v1/doc", async (IFormFile file, 
-                [FromServices] IHttpClientFactory httpClientFactory, 
-                [FromServices] IConfiguration configuration,
                 [FromServices] IDocService docService,
-                [FromServices] ILogService logService,
                 ClaimsPrincipal claims) =>
         {
              if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
@@ -154,166 +152,22 @@ public static class DocEndpoints
 
             // 2. Validate that the file is a PDF
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (extension != ".pdf") return Results.BadRequest("Only PDF files are allowed.");
-
-            DdtResponse? ddtResponse = null;
 
             try
             {
-                Stopwatch stopwatch = Stopwatch.StartNew();
-
-                var file_byte = await FileHelper.ConvertFormFileToByteArray(file);
-                
-                //Access the file stream directly (e.g., to upload to AWS S3, Azure Blob, or database)
-                using var stream = file.OpenReadStream();
-
-                // 2. Create the HttpClient instance
-                var client = httpClientFactory.CreateClient();
-
-                // 3. Prepare the multipart form data content
-                using var form = new MultipartFormDataContent();
-
-                // Open the stream of the incoming file
-                using var fileStream = file.OpenReadStream();
-                using var streamContent = new StreamContent(fileStream);
-
-                // Pass along the original Content-Type headers
-                streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
-
-                // "file" is the parameter name the external API expects. 
-                // file.FileName ensures the external API knows the original file name.
-                form.Add(streamContent, "file", file.FileName);
-                
-                // 4. Send POST request to the external/internal API
-                var url = configuration["EMMA-AI:EndPoint"]; //https://emma-aegc.onrender.com",
-                var externalApiUrl = $"{url}/api/v1/doc/ddt";
-                
-                using var request = new HttpRequestMessage(HttpMethod.Post, externalApiUrl);
-                request.Content = form;
-
-                // ADD YOUR HEADERS HERE
-                var model = configuration["EMMA-AI:Model"];
-                request.Headers.Add("x-model", model); 
-                var apiKey = configuration["EMMA-AI:ApiKey"];
-                request.Headers.Add("X-API-Key", apiKey);
-                
-                var response = await client.SendAsync(request);
-
-
-                stopwatch.Stop();
-                long secondiInteri = stopwatch.ElapsedMilliseconds / 1000;
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    // 3. Deserializza la stringa nell'oggetto DatiBolla
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    ddtResponse = JsonSerializer.Deserialize<DdtResponse>(responseContent, options);
-                    
-                    //Salvo sul database
-                    int? idDoc = 0;
-                    if (ddtResponse is not null)
-                    {
-                        EmmaDocFilters emmaDocFilters = new EmmaDocFilters()
-                        {
-                                Fornitore = ddtResponse.Document.Mittente,
-                                NumeroDoc = ddtResponse.Document.NumeroBolla,
-                                DataDoc = ddtResponse.Document.DataBolla,
-                                Stato = -1,
-                                TipoDoc = int.Parse(ddtResponse.Document.TipoDocumento)
-                        };
-                        responseContent =  JsonSerializer.Serialize(ddtResponse, options);
-                        
-                        idDoc = await docService.AddDocAsync(emmaDocFilters , 
-                             responseContent,
-                            ddtResponse.FileName ?? string.Empty, file_byte, tenant);
-
-                        //**************
-                        //LOG SUCCESS AI
-                        //**************
-                        await logService.AddAsync(new EmmaLog()
-                        {
-                            stato = 1,
-                            tenant = tenant,
-                            token_input = ddtResponse.Costs.PromptTokens,
-                            token_output = ddtResponse.Costs.OutputTokens,
-                            token_tot = ddtResponse.Costs.TotalTokens,
-                            cost = ddtResponse.Costs.TotalCostEur,
-                            message = idDoc.ToString(),
-                            duration = secondiInteri
-                        });
-
-                        ////--------------------------------------------------------------------------------
-                        //Aggiorna Anagrafiche
-                        //--------------------------------------------------------------------------------
-                        if (idDoc is not null) await AggiornaAnagrafiche(docService, idDoc.Value);
-                        ////--------------------------------------------------------------------------------
-                    }
-
-                    return Results.Ok(new DocResponse()
-                    {
-                        DocId = idDoc is not null ? idDoc.Value : 0,
-                        DdtResponse =  ddtResponse,
-                    });
-                }
-                else
-                {
-                    //**************
-                    //LOG ERRORE AI
-                    //**************
-
-                    await logService.AddAsync(new EmmaLog()
-                    {
-                        stato = -1,
-                        tenant = tenant,
-                        token_input = ddtResponse?.Costs?.PromptTokens ?? 0,
-                        token_output = ddtResponse?.Costs?.OutputTokens ?? 0,
-                        token_tot = ddtResponse?.Costs?.TotalTokens ?? 0,
-                        cost = ddtResponse?.Costs?.TotalCostEur ?? 0,
-                        message = $"{response.StatusCode} - {response.Content}",
-                        duration = secondiInteri
-                    });
-
-                    return Results.Problem($"Internal server error: {response.StatusCode}");
-                }
+                if (extension == ".pdf") return Results.Ok(await docService.ImportDocAsync(file, tenant));
+                else if (extension== ".xml") return Results.Ok(await docService.ImportFatturaElettronicaAsync(file, tenant));
+                else return Results.BadRequest($"{extension} files not allowed.");
             }
             catch (Exception ex)
             {
-                //**************
-                //LOG ERRORE SERVER
-                //**************
-                
-
-                await logService.AddAsync(new EmmaLog()
-                {
-                    stato = -2,
-                    tenant = tenant,
-                    token_input = ddtResponse?.Costs?.PromptTokens ?? 0,
-                    token_output = ddtResponse?.Costs?.OutputTokens ?? 0,
-                    token_tot = ddtResponse?.Costs?.TotalTokens ?? 0,
-                    cost = ddtResponse?.Costs?.TotalCostEur ?? 0,
-                    message = ex.Message,
-                    duration = 0
-                });
-
                 return Results.Problem($"Internal server error: {ex.Message}");
             }
+
         })
         .WithName("doc")
         .DisableAntiforgery(); // FONDAMENTALE per client desktop come Avalonia
     }
 
-     private static async Task AggiornaAnagrafiche(IDocService docService,int idDoc)
-    {
-        try
-        {
-            await docService.AddOrUpdateFornitorieArticoli(idDoc);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-    }
 }
 
