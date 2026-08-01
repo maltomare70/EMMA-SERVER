@@ -30,7 +30,7 @@ public class DatabaseAuthValidator: IBasicAuthValidator
     {
             using var db = CreaConnessione();
             const string sql = "SELECT * FROM users WHERE email = @email;";
-            var user = await db.QueryFirstAsync<EmmaUser>(sql, new { email = email });
+            var user = await db.QueryFirstAsync<EmmaUser>(sql, new { email = email.ToLowerInvariant() });
             
             if ( user is null || string.IsNullOrWhiteSpace(user.pwd)) return new AuthValidationResult(false, null, null);
 

@@ -19,7 +19,7 @@ public class BolleRepository: RepositoryGenerico<Bolle>, IBolleRepository
     public async  Task<List<Bolle?>> GetBolleByFornitore(string fornitore)
     {
         string sql = @"SELECT id, file_name, data  FROM bolle 
-                    WHERE data->'document'->>'mittente' = @Mittente;";
+                    WHERE data->'document'->>'mittente' = lower(@Mittente);";
 
         var parametri = new {
             Mittente = fornitore
@@ -36,8 +36,8 @@ public class BolleRepository: RepositoryGenerico<Bolle>, IBolleRepository
         string sql = @"
             SELECT id, file_name, data 
             FROM bolle 
-            WHERE data->'document'->>'mittente' = @Mittente
-              AND data->'document'->>'numero_bolla' = @NumeroBolla
+            WHERE data->'document'->>'mittente' = lower(@Mittente)
+              AND data->'document'->>'numero_bolla' = lower(@NumeroBolla)
               AND data->'document'->>'data_bolla' = @DataBolla;";
 
         var parametri = new {

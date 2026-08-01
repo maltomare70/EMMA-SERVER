@@ -26,14 +26,14 @@ public class UserRepository : RepositoryGenerico<EmmaUser>, IUserRepository
         using var db = await CreaConnessione();
         
         // Eseguiamo una normale query Dapper (non Contrib)
-        return await db.QueryFirstAsync<EmmaUser>(sql, new { email = email });
+        return await db.QueryFirstAsync<EmmaUser>(sql, new { email = email.ToLowerInvariant() });
     }
 
     public async Task<int> CambiaPasswordAsync(CambiaPasswordRequest cambiaPasswordRequest)
     {
         const string sql = "UPDATE users SET pwd = @pwd WHERE email = @email;";
         using var db = await CreaConnessione();
-        return await db.ExecuteAsync(sql, new { email = cambiaPasswordRequest.email, pwd = cambiaPasswordRequest.hash });
+        return await db.ExecuteAsync(sql, new { email = cambiaPasswordRequest.email.ToLowerInvariant(), pwd = cambiaPasswordRequest.hash });
     }
 
 }

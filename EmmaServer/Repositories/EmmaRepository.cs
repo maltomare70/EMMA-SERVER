@@ -121,10 +121,19 @@ public class EmmaRepository: IEmmaRepository
 
 
         if (tableName.ToLower() == "users")
-            sql +=  " CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON public.users USING btree (email);";
+        {
+            sql += " CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON public.users USING btree (email);";
+        }
         else if (tableName.ToLower() == "articoli")
-            sql +=  " CREATE INDEX IF NOT EXISTS id_fornitore_idx ON public.articoli USING btree (idFornitore);";
-        
+        {
+            sql += " CREATE INDEX IF NOT EXISTS id_fornitore_idx ON public.articoli USING btree (idFornitore);";
+        }
+        else if (tableName.ToLower() == "docs")
+        {
+            sql += " CREATE INDEX ix_bolle_mittente_lower ON docs (lower(content->'document'->>'mittente'));";
+            sql += " CREATE INDEX ix_bolle_numero_lower ON docs (lower(content->'document'->>'numero_bolla'));";
+        }
+
         using var db = await CreaConnessione();
         await db.ExecuteAsync(sql);
 
