@@ -3,7 +3,9 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Net.Http.Json;
 
-
+using System.Net;
+using Polly;
+using Polly.Retry;
 
 namespace EmmaClientAv.Services;
 
@@ -16,7 +18,7 @@ public interface IDocService
     Task InviaModificaAllApi(ArticoloBolla articoloBolla);
     Task<bool> InviaEliminazioneAllApi(RigheDocumento riga);
     Task<bool> PingAsync();
-    Task<DatiBolla?> InviaFileAsync(Stream fileStream, string fileName);
+    Task<DatiBolla?> InviaFileAsync(Stream fileStream, string fileName, CancellationToken ct = default);
     Task CleanDocs();
 }
 
@@ -228,55 +230,70 @@ public class DocService :IDocService
             return false;
         }
     }
-    
-    public async Task<DatiBolla?> InviaFileAsync(Stream fileStream, string fileName)
+
+
+    // Pipeline condivisa (thread-safe, va creata una sola volta)
+    private static readonly ResiliencePipeline<HttpResponseMessage> UploadRetryPipeline =
+        new ResiliencePipelineBuilder<HttpResponseMessage>()
+            .AddRetry(new RetryStrategyOptions<HttpResponseMessage>
+            {
+                ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
+                    .Handle<HttpRequestException>()
+                    .Handle<TaskCanceledException>()
+                    .HandleResult(r => (int)r.StatusCode >= 500
+                                    || r.StatusCode == HttpStatusCode.RequestTimeout
+                                    || r.StatusCode == HttpStatusCode.TooManyRequests),
+                MaxRetryAttempts = 3,               // 1 chiamata iniziale + 3 retry
+                Delay = TimeSpan.FromSeconds(2),
+                BackoffType = DelayBackoffType.Exponential,
+                UseJitter = true,
+                OnRetry = args =>
+                {
+                    args.Outcome.Result?.Dispose(); // libera la response scartata
+                    return default;
+                }
+            })
+            .Build();
+
+    public async Task<DatiBolla?> InviaFileAsync(Stream fileStream, string fileName, CancellationToken ct = default)
     {
         string urlApi = $"{_url}/api/v1/doc";
 
-        using var client = new HttpClient();
-        using var content = new MultipartFormDataContent();
-        
-        // 1. Apriamo lo stream del file in lettura
-        using var streamContent = new StreamContent(fileStream);
+        // Il contenuto multipart non è riusabile: bufferizzo il file una volta sola
+        // così ogni tentativo ricostruisce la richiesta da zero.
+        if (fileStream.CanSeek) fileStream.Position = 0;
+        using var buffer = new MemoryStream();
+        await fileStream.CopyToAsync(buffer, ct).ConfigureAwait(false);
+        byte[] fileBytes = buffer.ToArray();
 
-        // 2. Impostiamo l'header del tipo di contenuto (opzionale, ma consigliato)
-        streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-
-        // 3. Il nome del parametro ("file") DEVE corrispondere esattamente 
-        // al nome della variabile nell'API Python: `file: UploadFile`
-        content.Add(streamContent, "file", fileName);
-
-        // --- MODIFICA QUI: Creiamo l'oggetto HttpRequestMessage ---
-        using var request = new HttpRequestMessage(HttpMethod.Post, urlApi);
-
-        // Configura il contenuto (il file multipart)
-        request.Content = content;
-
-        // Aggiungi l'header personalizzato (puoi usare "OPENAI" o "GEMINI")
-        // request.Headers.Add("x-model", model); 
-        // request.Headers.Add("X-API-Key", "");
-        // ---------------------------------------------------------
-        
-        // Codifica "username:password" in Base64
         var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_user}:{_password}"));
 
-        // Aggiungi l'header Authorization nel formato "Basic [Token]"
-        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
-        if (!string.IsNullOrWhiteSpace(_tenant)) request.Headers.Add("x-tenant", _tenant); 
-        
-        // 4. Eseguiamo la chiamata POST in modo asincrono
-        HttpResponseMessage response = await client.SendAsync(request);
-        
-        // 5. Verifichiamo l'esito
+        using var client = new HttpClient();
+
+        using HttpResponseMessage response = await UploadRetryPipeline.ExecuteAsync(async token =>
+        {
+            using var content = new MultipartFormDataContent();
+            var fileContent = new ByteArrayContent(fileBytes);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            content.Add(fileContent, "file", fileName);
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, urlApi) { Content = content };
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+            if (!string.IsNullOrWhiteSpace(_tenant)) request.Headers.Add("x-tenant", _tenant);
+
+            return await client.SendAsync(request, token).ConfigureAwait(false);
+        }, ct).ConfigureAwait(false);
+
         if (response.IsSuccessStatusCode)
         {
-            var ddt = await response.Content.ReadFromJsonAsync<DocResponse>().ConfigureAwait(false);
+            var ddt = await response.Content
+                .ReadFromJsonAsync<DocResponse>(cancellationToken: ct)
+                .ConfigureAwait(false);
             return ddt?.DdtResponse?.Document;
         }
-        else
-        {
-            throw new Exception($"Errore durante l'invio: {response.StatusCode} {response.Content}");
-        }
+
+        var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+        throw new HttpRequestException($"Errore durante l'invio: {(int)response.StatusCode} {response.ReasonPhrase} - {body}");
     }
 
     public async Task   CleanDocs()
