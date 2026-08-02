@@ -45,7 +45,7 @@ builder.Services.AddScoped<IArticoliRepository, ArticoliRepository>();
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<ILogService, LogService>();
-
+builder.Services.AddScoped<IConciliazioneService, ConciliazioneService>();
 
 
 EmailReaderOptions emailReaderOptions = new EmailReaderOptions()
@@ -115,6 +115,7 @@ app.MapAdminRoutes();
 app.MapFornitoreRoutes();
 app.MapArticoliRoutes();
 app.MapLogsRoutes();
+app.MapConciliazioneRoutes();
 
 app.UseCors("AllowAll");
 app.UseAuthentication();
