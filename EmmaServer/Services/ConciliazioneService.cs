@@ -65,7 +65,7 @@ public class ConciliazioneService : IConciliazioneService
     {
         try
         {
-            var fuzzyMatches = await GetConciliazioneFuzzyAsync(new PayloadRiconciliazioneFuzzy
+            var fuzzyMatches = await GetConciliazioneFuzzyAsync(new PayloadRiconciliazione
             {
                 bolle = bolle,
                 fatture = fatture
@@ -92,11 +92,11 @@ public class ConciliazioneService : IConciliazioneService
         }
     }
 
-    public async Task<List<FuzzyMatchResult>> GetConciliazioneFuzzyAsync(PayloadRiconciliazioneFuzzy payloadRiconciliazioneFuzzy)
+    public async Task<List<FuzzyMatchResult>> GetConciliazioneFuzzyAsync(PayloadRiconciliazione payloadRiconciliazioneFuzzy)
     {
         var client = _httpClientFactory.CreateClient();
         var url = _configuration["EMMA-AI:EndPoint"]; //https://emma-aegc.onrender.com",
-        var externalApiUrl = $"{url}/api/v1/riconcilia";
+        var externalApiUrl = $"{url}/api/v1/riconcilia/bolle-fatture";
 
         using var request = new HttpRequestMessage(HttpMethod.Post, externalApiUrl);
 

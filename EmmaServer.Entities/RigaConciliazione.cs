@@ -16,11 +16,7 @@ public class FuzzyMatchResult
     public double confidence { get; set; }
 }
 
-public class PayloadRiconciliazioneFuzzy
-{
-    public List<RigaConciliazione> bolle { get; set; } = new();
-    public List<RigaConciliazione> fatture { get; set; } = new();
-}
+
 public class RigaConciliazione
 {
     public bool Selezionato { get; set; }
