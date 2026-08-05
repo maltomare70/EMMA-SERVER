@@ -20,6 +20,9 @@ public class FuzzyMatchResult
 public class RigaConciliazione
 {
     public bool Selezionato { get; set; }
+    public string? Note { get; set; }
+
+    public string? Stato { get; set; }
 
     public string? IdMaster { get; set; }
     public string? IdRiga { get; set; }
@@ -33,6 +36,7 @@ public class RigaConciliazione
     public string? DescrizioneArticolo { get; set; }
     public string? UnitaMisura { get; set; }
     public double Qta { get; set; }
+    public double Qta_Conc { get; set; } = 0;
 
     /// <summary>Data documento convertita, quando interpretabile.</summary>
     public DateTime? Data { get; set; }

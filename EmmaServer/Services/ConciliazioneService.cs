@@ -1,13 +1,13 @@
 ﻿using EmmaServer.Entities;
-using System.Net.Http.Headers;
-using System.Text;
+using Microsoft.AspNetCore.Http.HttpResults;
+using System.Diagnostics;
 
 namespace EmmaServer.Services;
 
 public interface IConciliazioneService
 {
     Task<PayloadRiconciliazione> GetConciliazione(List<RigaConciliazione> bolle, List<RigaConciliazione> fatture);
-    Task<ConciliazioneResponse> GetConciliazioneBolleFattureAsync(InputConciliazione inputConciliazione);
+    Task<ConciliazioneResponse> GetConciliazioneBolleFattureAsync(InputConciliazione inputConciliazione, string tenant);
 }
 public class ConciliazioneService : IConciliazioneService
 {
@@ -121,32 +121,99 @@ public class ConciliazioneService : IConciliazioneService
         }
     }
 
-
-    public async Task<ConciliazioneResponse> GetConciliazioneBolleFattureAsync(InputConciliazione inputConciliazione)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="inputConciliazione"></param>
+    /// <returns></returns>
+    /// <exception cref="ApplicationException"></exception>
+    public async Task<ConciliazioneResponse> GetConciliazioneBolleFattureAsync(InputConciliazione inputConciliazione, string tenant)
     {
-        var client = _httpClientFactory.CreateClient();
-        var url = _configuration["EMMA-AI:EndPoint"]; //https://emma-aegc.onrender.com",
-        var externalApiUrl = $"{url}/api/v1/riconcilia/bolle-fatture";
+        Stopwatch stopwatch = Stopwatch.StartNew();
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, externalApiUrl);
-
-        // ADD YOUR HEADERS HERE
-        var model = _configuration["EMMA-AI:Model"];
-        request.Headers.Add("x-model", model);
-        var apiKey = _configuration["EMMA-AI:ApiKey"];
-        request.Headers.Add("X-API-Key", apiKey);
-
-        request.Content = JsonContent.Create(inputConciliazione);
-        HttpResponseMessage response = await client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
+        try
         {
-            var fuzzyMatchResults = await response.Content.ReadFromJsonAsync<ConciliazioneResponse>();
-            return fuzzyMatchResults ?? new ConciliazioneResponse();
+            var client = _httpClientFactory.CreateClient();
+            var url = _configuration["EMMA-AI:EndPoint"]; //https://emma-aegc.onrender.com",
+            var externalApiUrl = $"{url}/api/v1/riconcilia/bolle-fatture";
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, externalApiUrl);
+
+            // ADD YOUR HEADERS HERE
+            var model = _configuration["EMMA-AI:Model"];
+            request.Headers.Add("x-model", model);
+            var apiKey = _configuration["EMMA-AI:ApiKey"];
+            request.Headers.Add("X-API-Key", apiKey);
+
+            request.Content = JsonContent.Create(inputConciliazione);
+            HttpResponseMessage response = await client.SendAsync(request);
+
+            stopwatch.Stop();
+            long secondiInteri = stopwatch.ElapsedMilliseconds / 1000;
+
+            if (response.IsSuccessStatusCode)
+            {
+                var results = await response.Content.ReadFromJsonAsync<ConciliazioneResponse>();
+
+                //**************
+                //LOG SUCCESS AI
+                //**************
+                await _logService.AddAsync(new EmmaLog()
+                {
+                    stato = 1,
+                    tenant = tenant,
+                    token_input = results.Costs.PromptTokens,
+                    token_output = results.Costs.OutputTokens,
+                    token_tot = results.Costs.TotalTokens,
+                    cost = results.Costs.TotalCostEur,
+                    message = $"{inputConciliazione.Fornitore}",
+                    duration = secondiInteri
+                });
+
+                return results ?? new ConciliazioneResponse();
+            }
+            else
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+
+                //**************
+                //LOG ERRORE AI
+                //**************
+
+                await _logService.AddAsync(new EmmaLog()
+                {
+                    stato = -1,
+                    tenant = tenant,
+                    token_input = 0,
+                    token_output = 0,
+                    token_tot = 0,
+                    cost = 0,
+                    message = $"{response.StatusCode} - {response.Content}",
+                    duration = secondiInteri
+                });
+
+                throw new ApplicationException(errorContent);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            string errorContent = await response.Content.ReadAsStringAsync();
-            throw new ApplicationException(errorContent);
+            stopwatch.Stop();
+            long secondiInteri = stopwatch.ElapsedMilliseconds / 1000;
+            //**************
+            //LOG ERRORE AI
+            //**************
+            await _logService.AddAsync(new EmmaLog()
+            {
+                stato = -1,
+                tenant = tenant,
+                token_input = 0,
+                token_output = 0,
+                token_tot = 0,
+                cost = 0,
+                message = $"{ex.Message}",
+                duration = secondiInteri
+            });
+            throw new ApplicationException(ex.Message);
         }
     }
 }

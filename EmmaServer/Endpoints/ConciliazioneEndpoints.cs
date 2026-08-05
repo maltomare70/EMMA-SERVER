@@ -16,7 +16,10 @@ public static class ConciliazioneEndpoints
             if (claims.Identity == null || !claims.Identity.IsAuthenticated)
                 return Results.BadRequest("Utente non autorizzato");
 
-            var result = await conciliazione.GetConciliazioneBolleFattureAsync(inputConciliazione);
+            string? tenant = claims.FindFirstValue("tenant");
+            if (string.IsNullOrWhiteSpace(tenant)) return Results.BadRequest("No tenant.");
+
+            var result = await conciliazione.GetConciliazioneBolleFattureAsync(inputConciliazione, tenant);
             return Results.Ok(result);
         }).WithName("Conciliazione");
     }

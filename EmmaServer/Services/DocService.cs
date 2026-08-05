@@ -1,11 +1,6 @@
-using Emma.Services.Services;
-using EmmaClientAv.Services;
 using EmmaServer.Entities;
-using  EmmaServer.Repositories;
-using FatturaElettronica.Extensions;
+using EmmaServer.Repositories;
 using FatturaElettronica.Ordinaria;
-using Microsoft.Extensions.Options;
-using MimeKit.Encodings;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text.Json;
