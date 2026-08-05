@@ -44,7 +44,7 @@ public class DocService :IDocService
     //poi questa chiamata va eliminata che non serve
     public async Task<bool> PingAsync()
     {
-        string urlApi = $"https://emma-aegc.onrender.com/api/health";
+        string urlApi = $"{_url}/api/health";
         using var request = new HttpRequestMessage(HttpMethod.Get, urlApi);
         HttpResponseMessage response = await Client.SendAsync(request);
         if (response.IsSuccessStatusCode) return true;

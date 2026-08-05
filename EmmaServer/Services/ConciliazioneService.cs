@@ -7,6 +7,7 @@ namespace EmmaServer.Services;
 public interface IConciliazioneService
 {
     Task<PayloadRiconciliazione> GetConciliazione(List<RigaConciliazione> bolle, List<RigaConciliazione> fatture);
+    Task<ConciliazioneResponse> GetConciliazioneBolleFattureAsync(InputConciliazione inputConciliazione);
 }
 public class ConciliazioneService : IConciliazioneService
 {
@@ -112,6 +113,35 @@ public class ConciliazioneService : IConciliazioneService
         {
             var fuzzyMatchResults = await response.Content.ReadFromJsonAsync<List<FuzzyMatchResult>>();
             return fuzzyMatchResults ?? new List<FuzzyMatchResult>();
+        }
+        else
+        {
+            string errorContent = await response.Content.ReadAsStringAsync();
+            throw new ApplicationException(errorContent);
+        }
+    }
+
+
+    public async Task<ConciliazioneResponse> GetConciliazioneBolleFattureAsync(InputConciliazione inputConciliazione)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var url = _configuration["EMMA-AI:EndPoint"]; //https://emma-aegc.onrender.com",
+        var externalApiUrl = $"{url}/api/v1/riconcilia/bolle-fatture";
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, externalApiUrl);
+
+        // ADD YOUR HEADERS HERE
+        var model = _configuration["EMMA-AI:Model"];
+        request.Headers.Add("x-model", model);
+        var apiKey = _configuration["EMMA-AI:ApiKey"];
+        request.Headers.Add("X-API-Key", apiKey);
+
+        request.Content = JsonContent.Create(inputConciliazione);
+        HttpResponseMessage response = await client.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            var fuzzyMatchResults = await response.Content.ReadFromJsonAsync<ConciliazioneResponse>();
+            return fuzzyMatchResults ?? new ConciliazioneResponse();
         }
         else
         {
