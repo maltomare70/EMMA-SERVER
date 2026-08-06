@@ -128,48 +128,47 @@ public class ArticoliService : IArticoliService
             
             var listaArticoli = await _repository.GetAllTenantByFornitoreAsync(tenant, idFornitore);
             
+
             var codiceList = listaArticoli.Select(f => f.codice).ToList();
             foreach (var articoloBolla in articoli)
             {
-                var bestMatch = Process.ExtractOne(articoloBolla.Codice, codiceList);
-                if (bestMatch != null)
+                var code = articoloBolla.Codice;
+                
+                var existingArticolo = listaArticoli.Where(x => x.codice.Equals(code)).FirstOrDefault();
+                if (existingArticolo is null)
                 {
-                    string matchedValue = bestMatch.Value; // The string that matched
-                    int score = bestMatch.Score;           // Match score (0-100)
-                    if (score == 100)
+                    var bestMatch = Process.ExtractOne(code, codiceList);
+                    if (bestMatch != null)
                     {
-                        //E' già inserito sul database
-                    }
-                    else if (score >= 90 && score < 100)
-                    {
-                        //Potrebbe essere lui
-                        //da valutare se l'algoritmo è ok
-                        //da loggare
+                        string matchedValue = bestMatch.Value; // The string that matched
+                        int score = bestMatch.Score;           // Match score (0-100)
+                        if (score == 100)
+                        {
+                            //E' già inserito sul database
+                        }
+                        else if (score >= 90 && score < 100)
+                        {
+                            //Potrebbe essere lui
+                            //da valutare se l'algoritmo è ok
+                            //da loggare
+                        }
+                        else
+                        {
+                            //ADD
+                            await AddArticoloAsync(new EmmaArticoli()
+                            {
+                                codice = articoloBolla.Codice,
+                                descrizione = articoloBolla.Descrizione,
+                                tenant = tenant,
+                                idfornitore = idFornitore,
+                                scorecodice = score,
+                            });
+                        }
                     }
                     else
                     {
-                        //ADD
-                        await AddArticoloAsync(new  EmmaArticoli()
-                        {
-                            codice = articoloBolla.Codice,
-                            descrizione = articoloBolla.Descrizione,
-                            tenant = tenant,
-                            idfornitore = idFornitore,
-                            scorecodice = score,
-                        });
+                        //
                     }
-                }
-                else
-                {
-                    //ADD
-                    await AddArticoloAsync(new  EmmaArticoli()
-                    {
-                        codice = articoloBolla.Codice,
-                        descrizione = articoloBolla.Descrizione,
-                        tenant = tenant,
-                        idfornitore = idFornitore,
-                        scorecodice = 100
-                    });
                 }
             }
             

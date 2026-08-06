@@ -56,11 +56,17 @@ public class FornitoriService : IFornitoriService
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             DdtResponse? ddtResponse = JsonSerializer.Deserialize<DdtResponse>(doc.content!, options);
             var fornitore = ddtResponse?.Document.Mittente;
+            if (string.IsNullOrWhiteSpace(fornitore)) return 0;
             
             //Elenco di tutti i fornitori del tenant
             var fornitori = await GetAllTenantAsync();
-            var fornitoriList = fornitori.Select(f => f.descrizione).ToList();
+            var fornitoriList = fornitori.Select(f => f?.descrizione).ToList();
+
+            var fornitore_db = fornitori.Where(x => x!.descrizione.Equals(fornitore, StringComparison.InvariantCultureIgnoreCase))
+                .FirstOrDefault();
+            if (fornitore_db is not null) return fornitore_db.id;
             
+
             //Cerco il fornitore dall'elenco
             var bestMatch = Process.ExtractOne(fornitore, fornitoriList);
             if (bestMatch != null)
@@ -70,10 +76,12 @@ public class FornitoriService : IFornitoriService
                 int index = bestMatch.Index;           // Index in the original collection
 
                 var f = fornitori.ToList()[index];
+                if (f is null) return 0;
                 
                 if (score == 100)
                 {
                     //E' già inserito sul database
+                    //viene intercettato dalla prima query
                     id_fornitore = f.id;
                 }
                 else if (score >= 90 && score < 100)
@@ -93,12 +101,7 @@ public class FornitoriService : IFornitoriService
             }
             else
             {
-                id_fornitore = await AddFornitoreAsync(new EmmaFornitori()
-                {
-                    tenant = doc.tenant,
-                    descrizione = fornitore,
-                    score = 100
-                });
+                return 0;
             }
         }
 
