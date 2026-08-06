@@ -223,8 +223,7 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
     }
 
     /// <summary>
-    /// Servizio in background che cancella i documenti chiusi con data superiore ai 30gg
-    /// Servizio in background che cancella i documenti aperti con data superiore ai 180gg
+    /// Servizio in background che cancella i documenti chiusi con data superiore ai 90gg
     /// </summary>
     /// <returns></returns>
     public async Task<int> CleanDocAsync()
@@ -232,18 +231,10 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
         var sql = """
             DELETE FROM docs 
             WHERE stato = 1 
-              AND data_creazione < NOW() - INTERVAL '30 days'
+              AND data_creazione < NOW() - INTERVAL '90 days'
             """;
         using var db = await CreaConnessione();
         var ret = await db.ExecuteAsync(sql);
-
-        sql = """
-            DELETE FROM docs 
-            WHERE stato = 0 
-              AND data_creazione < NOW() - INTERVAL '180 days'
-            """;
-
-        ret = ret + await db.ExecuteAsync(sql);
 
         return ret;
     }
