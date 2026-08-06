@@ -1,0 +1,48 @@
+﻿using Dapper.Contrib.Extensions;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Text.Json;
+
+namespace EmmaServer.Entities;
+
+[Table("conciliamaster")]
+public record EmmaConciliaMaster : IEntity
+{
+    [Dapper.Contrib.Extensions.Key]
+    public int id { get; set; }
+    public string tenant { get; set; } = string.Empty;
+    [Write(false)]
+    public DateTime data_creazione { get; set; } = DateTime.UtcNow;
+
+    public string codice { get; init; } = string.Empty;
+
+    public JsonDocument? content { get; set; }   
+}
+
+
+[Table("conciliarighe")]
+public record EmmaConciliaRighe: IEntity
+{
+    [Dapper.Contrib.Extensions.Key]
+    public int id { get; set; }
+    public string id_master { get; set; } = string.Empty;
+    public string id_riga { get; set; } = string.Empty;
+    public string tenant { get; set; } = string.Empty;
+    [Write(false)]
+    public DateTime data_creazione { get; set; } = DateTime.UtcNow;
+
+    public string codice { get; init; } = string.Empty;
+    public string stato { get; init; } = string.Empty;
+    public string note { get; init; } = string.Empty;
+
+    public string id_fornitore { get; set; } = string.Empty;
+    public int tipo_doc { get; set; } = 0;
+
+    public decimal qta { get; set; } = 0;
+    public decimal qta_canc { get; set; } = 0;
+    public decimal delta { get; set; } = 0;
+
+    public int flag { get; set; } = 0;
+
+}

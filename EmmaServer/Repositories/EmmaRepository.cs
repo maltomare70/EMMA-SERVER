@@ -56,6 +56,9 @@ public class EmmaRepository: IEmmaRepository
         await CreateTableFromClassAsync<EmmaFornitori>();
         await CreateTableFromClassAsync<EmmaArticoli>();
         await CreateTableFromClassAsync<EmmaLog>();
+
+        await CreateTableFromClassAsync<EmmaConciliaMaster>();
+        await CreateTableFromClassAsync<EmmaConciliaRighe>();
     }
     
 
@@ -130,8 +133,8 @@ public class EmmaRepository: IEmmaRepository
         }
         else if (tableName.ToLower() == "docs")
         {
-            sql += " CREATE INDEX ix_bolle_mittente_lower ON docs (lower(content->'document'->>'mittente'));";
-            sql += " CREATE INDEX ix_bolle_numero_lower ON docs (lower(content->'document'->>'numero_bolla'));";
+            sql += " CREATE INDEX IF NOT EXISTS ix_bolle_mittente_lower ON docs (lower(content->'document'->>'mittente'));";
+            sql += " CREATE INDEX IF NOT EXISTS ix_bolle_numero_lower ON docs (lower(content->'document'->>'numero_bolla'));";
         }
 
         using var db = await CreaConnessione();
@@ -148,7 +151,7 @@ public class EmmaRepository: IEmmaRepository
         if (tableName.Equals("tenants", StringComparison.InvariantCultureIgnoreCase))
         {
             string sql = """
-                CREATE UNIQUE INDEX tenant_emailfrom 
+                CREATE UNIQUE INDEX IF NOT EXISTS tenant_emailfrom 
                 ON tenants (mail_from) 
                 WHERE mail_from IS NOT NULL;
 

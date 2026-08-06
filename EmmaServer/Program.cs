@@ -46,7 +46,8 @@ builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IConciliazioneService, ConciliazioneService>();
-
+builder.Services.AddScoped<IConciliaRigheService, ConciliaRigheService>();
+builder.Services.AddScoped<IConciliaRigheRepository, ConciliaRigheRepository>();
 
 EmailReaderOptions emailReaderOptions = new EmailReaderOptions()
 {

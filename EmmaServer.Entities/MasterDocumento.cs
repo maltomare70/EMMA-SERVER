@@ -27,11 +27,11 @@ public class RigheDocumento
     
     public string? UnitaMisura { get; set; }
     
-    public double Qta { get; set; }
+    public decimal Qta { get; set; }
     
-    public double Imponibile { get; set; }
+    public decimal Imponibile { get; set; }
     public string? IVA { get; set; }
-    public double Totale { get; set; }
+    public decimal Totale { get; set; }
     
     public string TestoBottone => IdRiga == "" ? "Aggiungi" : "Elimina";
 }

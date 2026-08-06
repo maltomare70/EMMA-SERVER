@@ -185,10 +185,10 @@ public class DocService : IDocService
             ArticoloBolla articoloBolla = new ArticoloBolla();
 
             articoloBolla.UnitaMisura = riga.UnitaMisura;
-            articoloBolla.Quantita = (double) riga.Quantita;
+            articoloBolla.Quantita = riga.Quantita.Value;
             articoloBolla.Descrizione = riga.Descrizione;
             articoloBolla.Codice = riga.CodiceArticolo?.FirstOrDefault()?.CodiceValore ?? string.Empty;
-            articoloBolla.Totale = (double)riga.PrezzoTotale;
+            articoloBolla.Totale = riga.PrezzoTotale;
             articoloBolla.Iva = riga.AliquotaIVA.ToString();
             articoloBolla.Imponibile = 0;
             articoloBolla.Id_Master = idMaster.ToString();

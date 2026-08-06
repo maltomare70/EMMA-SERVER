@@ -82,17 +82,17 @@ public class ArticoloBolla
     public string Descrizione { get; set; } = string.Empty;
 
     [JsonPropertyName("quantita")]
-    public double Quantita { get; set; }
+    public decimal Quantita { get; set; }
 
     [JsonPropertyName("unita_misura")]
     public string UnitaMisura { get; set; } = string.Empty;
 
     [JsonPropertyName("imponibile")]
-    public double Imponibile { get; set; }
+    public decimal Imponibile { get; set; }
 
     [JsonPropertyName("iva")]
     public string Iva { get; set; } = string.Empty;
 
     [JsonPropertyName("totale")]
-    public double Totale { get; set; }
+    public decimal Totale { get; set; }
 }

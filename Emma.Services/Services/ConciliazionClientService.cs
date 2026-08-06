@@ -9,6 +9,10 @@ namespace EmmaClientAv.Services;
 public interface IConciliazioneClientService
 {
     Task<List<ConciliazioneResponse>> GetConciliazione(List<RigaConciliazione> bolle, List<RigaConciliazione> fatture);
+
+    Task SalvaConciliazione(List<RigaConciliazione> bolle, List<RigaConciliazione> fatture);
+
+    Task<List<EmmaConciliaRighe>> GetAllAsync();
 }
 public class ConciliazionClientService : IConciliazioneClientService
 {
@@ -27,6 +31,24 @@ public class ConciliazionClientService : IConciliazioneClientService
         _tenant = tenant;
 
         Client = new HttpClient();
+    }
+
+    public async Task<List<EmmaConciliaRighe>> GetAllAsync()
+    {
+        string urlApi = $"{_url}/api/v1/conciliazione";
+        using var request = new HttpRequestMessage(HttpMethod.Get, urlApi);
+        var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_user}:{_password}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+        HttpResponseMessage response = await Client.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            var emmaFornitoriList = await response.Content.ReadFromJsonAsync<List<EmmaConciliaRighe>>().ConfigureAwait(false);
+            return emmaFornitoriList?.ToList() ?? new List<EmmaConciliaRighe>();
+        }
+        else
+        {
+            return new List<EmmaConciliaRighe>();
+        }
     }
 
     public async Task<List<ConciliazioneResponse>> GetConciliazione(
@@ -97,5 +119,35 @@ public class ConciliazionClientService : IConciliazioneClientService
         }
 
            return results;
+    }
+
+    public async Task SalvaConciliazione(
+    List<RigaConciliazione> bolle,
+    List<RigaConciliazione> fatture)
+    {
+        PayloadRiconciliazione payload = new PayloadRiconciliazione()
+        {
+            codice = Guid.NewGuid().ToString(),
+            bolle = bolle,
+            fatture = fatture
+        };
+
+        var urlApi = $"{_url}/api/v1/salva-conciliazione";
+        var request = new HttpRequestMessage(HttpMethod.Post, urlApi);
+        var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_user}:{_password}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+        request.Content = JsonContent.Create(payload);
+
+        HttpResponseMessage response = await Client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+        else
+        {
+            string errorContent = await response.Content.ReadAsStringAsync();
+            throw new ApplicationException(errorContent);
+        }
     }
 }

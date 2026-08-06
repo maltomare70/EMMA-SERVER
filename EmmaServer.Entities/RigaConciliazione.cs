@@ -3,6 +3,7 @@ namespace EmmaServer.Entities;
 
 public class PayloadRiconciliazione
 {
+    public string codice { get; set; } = string.Empty;
     public List<RigaConciliazione> bolle { get; set; } = new();
     public List<RigaConciliazione> fatture { get; set; } = new();
 }
@@ -35,8 +36,8 @@ public class RigaConciliazione
     public string? CodiceArticolo { get; set; }
     public string? DescrizioneArticolo { get; set; }
     public string? UnitaMisura { get; set; }
-    public double Qta { get; set; }
-    public double Qta_Conc { get; set; } = 0;
+    public decimal Qta { get; set; }
+    public decimal Qta_Conc { get; set; } = 0;
 
     /// <summary>Data documento convertita, quando interpretabile.</summary>
     public DateTime? Data { get; set; }

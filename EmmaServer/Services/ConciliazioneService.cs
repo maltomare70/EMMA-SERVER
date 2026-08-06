@@ -52,7 +52,7 @@ public class ConciliazioneService : IConciliazioneService
                 b => new { b.Fornitore, b.CodiceArticolo },
                 f => new { f.Fornitore, f.CodiceArticolo },
                 (b, f) => new { b, f })
-            .Where(x => Math.Abs(x.b.Qta - x.f.Qta) < 0.01)
+            .Where(x => (x.b.Qta - x.f.Qta) == 0)
             .ToList();
 
         return new PayloadRiconciliazione

@@ -17,7 +17,7 @@ public class DettaglioDocumento
     public string Codice { get; set; } = string.Empty;
 
     [JsonPropertyName("qta")]
-    public double Qta { get; set; }
+    public decimal Qta { get; set; }
 }
 
 /// <summary>Classe contenitore per l'input unico</summary>
@@ -46,7 +46,7 @@ public class BollaCollegata
     public string CodiceOriginale { get; set; } = string.Empty;
 
     [JsonPropertyName("qta")]
-    public double Qta { get; set; }
+    public decimal Qta { get; set; }
 
     [JsonPropertyName("fuzzy_score")]
     public double FuzzyScore { get; set; }
@@ -61,7 +61,7 @@ public class DettaglioFattura
     public string Codice { get; set; } = string.Empty;
 
     [JsonPropertyName("qta")]
-    public double Qta { get; set; }
+    public decimal Qta { get; set; }
 }
 
 public class Conciliazione
@@ -73,13 +73,13 @@ public class Conciliazione
     public List<BollaCollegata> BolleCollegate { get; set; } = new();
 
     [JsonPropertyName("totale_qta_bolle")]
-    public double TotaleQtaBolle { get; set; }
+    public decimal TotaleQtaBolle { get; set; }
 
     [JsonPropertyName("stato_conciliazione")]
     public string StatoConciliazione { get; set; } = string.Empty;
 
     [JsonPropertyName("differenza_qta")]
-    public double DifferenzaQta { get; set; }
+    public decimal DifferenzaQta { get; set; }
 
     [JsonPropertyName("note")]
     public string Note { get; set; } = string.Empty;

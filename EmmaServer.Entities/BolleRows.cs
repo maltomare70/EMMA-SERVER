@@ -12,9 +12,9 @@ public record BolleRows: IEntity
     public int id_bolla { get; init; }
     public string codice { get; set; }
     public string descrizione { get; set; }
-    public double qta { get; init; }
+    public decimal qta { get; init; }
     public string um { get; set; }
-    public double imponibile { get; init; }
+    public decimal imponibile { get; init; }
     public string iva { get; set; }
-    public double totale { get; init; }
+    public decimal totale { get; init; }
 }
