@@ -13,6 +13,7 @@ public interface IDocService
 {
     Task<List<EmmaDoc>> GetDocsAsync(EmmaDocFilters docFilters);
     Task CambioStato(MasterDocumento masterDocumento);
+    Task CambioTipo(MasterDocumento masterDocumento);
     Task CancellaDocumento(MasterDocumento masterDocumento);
     Task<bool> InviaAddAllApi(RigheDocumento riga);
     Task InviaModificaAllApi(ArticoloBolla articoloBolla);
@@ -102,6 +103,41 @@ public class DocService :IDocService
 
             throw new HttpRequestException(
                 $"Errore durante il cambio stato del documento {masterDocumento.Id}. " +
+                $"Status: {response.StatusCode}. Dettagli: {errorContent}");
+        }
+    }
+
+    public async Task CambioTipo(MasterDocumento masterDocumento)
+    {
+        // 1. Guard Clause per evitare invii di payload invalidi
+        ArgumentNullException.ThrowIfNull(masterDocumento);
+
+        string urlApi = $"{_url}/api/v1/doc/tipo";
+        using var request = new HttpRequestMessage(HttpMethod.Post, urlApi);
+
+        // 2. Autenticazione Basic
+        var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_user}:{_password}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+
+        // 3. Payload
+
+        var payload = new CambioTipo
+        {
+            Id = masterDocumento.Id,
+            Tipo =int.Parse(masterDocumento.TipDocumento)
+        };
+        request.Content = JsonContent.Create(payload);
+
+        // 4. Esecuzione richiesta
+        HttpResponseMessage response = await Client.SendAsync(request);
+
+        // 5. Gestione errori robusta
+        if (!response.IsSuccessStatusCode)
+        {
+            string errorContent = await response.Content.ReadAsStringAsync();
+
+            throw new HttpRequestException(
+                $"Errore durante il cambio tipo del documento {masterDocumento.Id}. " +
                 $"Status: {response.StatusCode}. Dettagli: {errorContent}");
         }
     }

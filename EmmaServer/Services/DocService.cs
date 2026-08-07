@@ -24,6 +24,7 @@ public interface IDocService
     Task DeleteRigaDocAsync(ArticoloBolla articoloBolla);
     Task<bool> UpdateAsync(EmmaDoc doc);
     Task CambiaStatoAsync(CambioStato cambioStato);
+    Task CambiaTipoAsync(CambioTipo cambioTipo);
     Task DeleteDocAsync(EmmaDocFilters emmaDocFilter);
 
     Task<int> CleanDocAsync();
@@ -71,8 +72,14 @@ public class DocService : IDocService
     {
         await _repo.CambiaStatoAsync(cambioStato);
     }
-    
-    
+
+
+    public async Task CambiaTipoAsync(CambioTipo cambioTipo)
+    {
+        await _repo.CambiaTipoAsync(cambioTipo);
+    }
+
+
     public async Task InsertRigaDocAsync(ArticoloBolla articoloBolla)
     {
         await _repo.InsertRigaDocAsync(articoloBolla);

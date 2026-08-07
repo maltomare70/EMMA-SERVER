@@ -33,3 +33,8 @@ public class CambioStato
     public int Stato { get; set; } = 0;
 }
 
+public class CambioTipo
+{
+    public string Id { get; set; } = string.Empty;
+    public int Tipo { get; set; } = 0;
+}

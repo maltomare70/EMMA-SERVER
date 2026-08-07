@@ -14,6 +14,7 @@ public interface IDocRepository: IRepositoryGenerico<EmmaDoc>
     Task DeleteRigaDocAsync(ArticoloBolla articoloBolla);
     
     Task CambiaStatoAsync(CambioStato cambioStato);
+    Task CambiaTipoAsync(CambioTipo cambioTipo      );
     Task<int> CleanDocAsync();
 }
 
@@ -220,6 +221,28 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
         
         using var db = await CreaConnessione();
         var ret = await db.ExecuteAsync(sqlBuilder.ToString(), parametri);
+    }
+
+
+    public async Task CambiaTipoAsync(CambioTipo cambioTipo)
+    {
+        var tenant = _connectionProvider.GetTenant();
+
+
+        var sqlBuilder = new StringBuilder(@"
+        UPDATE docs
+        SET    content = jsonb_set(content, '{document,tipo_documento}', to_jsonb(@Tipo::text), true)
+                 - 'tipo_documento'
+        WHERE tenant = @Tenant AND content->'document'->>'id' = @Id;
+        ");
+        var parametri = new DynamicParameters();
+        parametri.Add("Tipo", cambioTipo.Tipo);
+        parametri.Add("Tenant", tenant);                
+        parametri.Add("Id", cambioTipo.Id);
+
+        using var db = await CreaConnessione();
+        var ret = await db.ExecuteAsync(sqlBuilder.ToString(), parametri);
+
     }
 
     /// <summary>

@@ -101,8 +101,17 @@ public static class DocEndpoints
             return Results.Ok();
             
         }).WithName("CambiaStato");
-        
-        
+
+        //Per il camboio stato
+        app.MapPost("/api/v1/doc/tipo", async (CambioTipo cambioTipo, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
+        {
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+
+            await docService.CambiaTipoAsync(cambioTipo);
+            return Results.Ok();
+
+        }).WithName("CambiaTipo");
+
         ///to ping AI Service
         app.MapGet("/api/health", async (
             [FromServices] IHttpClientFactory httpClientFactory,
