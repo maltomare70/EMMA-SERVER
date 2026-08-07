@@ -42,4 +42,34 @@ public class LogService
             return new List<EmmaLog>();
         }
     }
+
+    /// <summary>
+    /// Log di un tenant specifico. L'endpoint /api/logs/tenant ricava il tenant dai claim:
+    /// per l'utente "admin" il BasicAuthenticationHandler legge l'header "x-tenant"
+    /// (in sua assenza usa "emma"), quindi è così che l'amministratore sceglie il tenant.
+    /// A differenza di GetAllAsync() gli errori non vengono silenziati.
+    /// </summary>
+    public async Task<List<EmmaLog>> GetAllAsync(string tenant)
+    {
+        string urlApi = $"{_url}/api/logs/tenant";
+        using var request = new HttpRequestMessage(HttpMethod.Get, urlApi);
+        var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_user}:{_password}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+
+        if (!string.IsNullOrWhiteSpace(tenant))
+            request.Headers.Add("x-tenant", tenant);
+
+        HttpResponseMessage response = await Client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var logs = await response.Content.ReadFromJsonAsync<List<EmmaLog>>().ConfigureAwait(false);
+            return logs ?? new List<EmmaLog>();
+        }
+        else
+        {
+            var errore = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Errore durante la lettura dei log: {response.StatusCode} {errore}");
+        }
+    }
 }
