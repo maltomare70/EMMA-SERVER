@@ -132,7 +132,7 @@ public class EmailReader : IEmailReader
 
         // Se vuoi leggere il testo del corpo del messaggio:
         // Console.WriteLine($"Testo: {message.TextBody}");
-        IDocService docService = new DocService(emma_url, EmmaAdmin.ADMIN, _emailReaderOptions!.AdminPassword!, tenant.codice);
+        IDocServiceClient docService = new DocServiceClient(emma_url, EmmaAdmin.ADMIN, _emailReaderOptions!.AdminPassword!, tenant.codice);
 
         foreach (var attachment in message.Attachments)
         {

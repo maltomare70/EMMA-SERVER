@@ -27,7 +27,7 @@ public class CleanDocs : ICleanDocs
 
                 if (!string.IsNullOrWhiteSpace(emma_url))
                 {
-                    DocService docServiceClient = new DocService(emma_url, EmmaAdmin.ADMIN, _emailReaderOptions?.AdminPassword!);
+                    DocServiceClient docServiceClient = new DocServiceClient(emma_url, EmmaAdmin.ADMIN, _emailReaderOptions?.AdminPassword!);
                     await docServiceClient.CleanDocs();
                 }
 
