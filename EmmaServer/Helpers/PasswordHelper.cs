@@ -9,7 +9,7 @@ public static class PasswordHelper
 
         var passwordHasher = new PasswordHasher<object>();
 
-        string hashedPassword = passwordHasher.HashPassword(null, password);
+        string hashedPassword = passwordHasher.HashPassword(string.Empty, password);
 
         return hashedPassword;
     }
@@ -19,7 +19,7 @@ public static class PasswordHelper
         var passwordHasher = new PasswordHasher<object>();
 
         var result = passwordHasher.VerifyHashedPassword(
-            null,
+            string.Empty,
             hashedPasswordFromDb,
             passwordInseritaUtente
         );

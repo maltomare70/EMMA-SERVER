@@ -76,7 +76,10 @@ public class ArticoliService : IArticoliService
         foreach (var emmaArticoli in articolo)
         {
             var ret = await AddArticoloAsync(emmaArticoli);
-            list.Add(ret.Value);
+            if (ret.HasValue)
+            {
+                list.Add(ret.Value);
+            }
         }
 
         return list;
@@ -123,6 +126,10 @@ public class ArticoliService : IArticoliService
             
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             DdtResponse? ddtResponse = JsonSerializer.Deserialize<DdtResponse>(doc.content!, options);
+
+            //Only DDT documents are processed, if not return 0
+            if (ddtResponse?.Document.TipoDocumento != "2") return;
+
             var articoli = ddtResponse?.Document.Articoli;
             if (articoli is null) return;
             
@@ -167,53 +174,17 @@ public class ArticoliService : IArticoliService
                     }
                     else
                     {
-                        //
+                        await AddArticoloAsync(new EmmaArticoli()
+                        {
+                            codice = articoloBolla.Codice,
+                            descrizione = articoloBolla.Descrizione,
+                            tenant = tenant,
+                            idfornitore = idFornitore,
+                            scorecodice = 0,
+                        });
                     }
                 }
             }
-            
-            // var descrizioneList = listaArticoli.Select(f => f.descrizione).ToList();
-            // foreach (var articoloBolla in articoli)
-            // {
-            //     var bestMatch = Process.ExtractOne(articoloBolla.Descrizione, descrizioneList);
-            //     if (bestMatch != null)
-            //     {
-            //         string matchedValue = bestMatch.Value; // The string that matched
-            //         int score = bestMatch.Score;           // Match score (0-100)
-            //         if (score == 100)
-            //         {
-            //             //E' già inserito sul database
-            //         }
-            //         else if (score >= 90 && score < 100)
-            //         {
-            //             //Potrebbe essere lui da valutare se l'algoritmo è ok da loggare
-            //         }
-            //         else
-            //         {
-            //             //ADD
-            //             await AddArticoloAsync(new  EmmaArticoli()
-            //             {
-            //                 codice = articoloBolla.Codice,
-            //                 descrizione = matchedValue,
-            //                 tenant = tenant,
-            //                 idfornitore = idFornitore,
-            //                 scoredescrizione = score
-            //             });
-            //         }
-            //     }
-            //     else
-            //     {
-            //         //ADD
-            //         await AddArticoloAsync(new  EmmaArticoli()
-            //         {
-            //             codice = articoloBolla.Codice,
-            //             descrizione = articoloBolla.Descrizione,
-            //             tenant = tenant,
-            //             idfornitore = idFornitore,
-            //             scoredescrizione = 100     
-            //         });
-            //     }
-            // }
         }
     }
 }

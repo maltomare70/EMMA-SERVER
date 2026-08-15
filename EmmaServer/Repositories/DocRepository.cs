@@ -50,12 +50,12 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
         var ddtResponse = emmaDoc?.content?.Deserialize<DdtResponse>();
         var doc = ddtResponse?.Document;
         var riga = doc?.Articoli.FirstOrDefault((x => x.Id_Riga.ToLower() == articoloBolla.Id_Riga.ToLower()));
-        doc.Articoli.Remove(riga);
+        if (riga is not null) doc?.Articoli.Remove(riga);
 
         using JsonDocument ddtResponseModificato = ConvertObjectToJsonDocument(ddtResponse);
-        emmaDoc.content = ddtResponseModificato;
+        emmaDoc?.content = ddtResponseModificato;
 
-        await UpdateAsync(emmaDoc);
+        if (emmaDoc is not null) await UpdateAsync(emmaDoc);
     }
     
 
@@ -91,12 +91,12 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
         riga.Totale = articoloBolla.Totale;
         riga.Iva = articoloBolla.Iva;
         riga.UnitaMisura = articoloBolla.UnitaMisura;
-        ddtResponse.Document.Articoli.Add(riga);
+        ddtResponse?.Document.Articoli.Add(riga);
 
         using JsonDocument ddtResponseModificato = ConvertObjectToJsonDocument(ddtResponse);
-        emmaDoc.content = ddtResponseModificato;
+        emmaDoc?.content = ddtResponseModificato;
 
-        await UpdateAsync(emmaDoc);
+        if (emmaDoc is not null) await UpdateAsync(emmaDoc);
         
     }
     
@@ -123,20 +123,22 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
         var ddtResponse = emmaDoc?.content?.Deserialize<DdtResponse>();
         var doc = ddtResponse?.Document;
         var riga = doc?.Articoli.FirstOrDefault((x => x.Id_Riga.ToLower() == articoloBolla.Id_Riga.ToLower()));
-       
-        riga.Quantita = articoloBolla.Quantita;
-        riga.Codice = articoloBolla.Codice;
-        riga.Descrizione = articoloBolla.Descrizione;
-        riga.Imponibile = articoloBolla.Imponibile;
-        riga.Totale = articoloBolla.Totale;
-        riga.Iva = articoloBolla.Iva;
-        riga.UnitaMisura = articoloBolla.UnitaMisura;
-            
+
+        if (riga != null)
+        {
+            riga.Quantita = articoloBolla.Quantita;
+            riga.Codice = articoloBolla.Codice;
+            riga.Descrizione = articoloBolla.Descrizione;
+            riga.Imponibile = articoloBolla.Imponibile;
+            riga.Totale = articoloBolla.Totale;
+            riga.Iva = articoloBolla.Iva;
+            riga.UnitaMisura = articoloBolla.UnitaMisura;
+        }
 
         using JsonDocument ddtResponseModificato = ConvertObjectToJsonDocument(ddtResponse);
-        emmaDoc.content = ddtResponseModificato;
+        emmaDoc?.content = ddtResponseModificato;
 
-        await UpdateAsync(emmaDoc);
+        if (emmaDoc is not null) await UpdateAsync(emmaDoc);
         
     }
     
@@ -153,32 +155,34 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
     {
         var tenant = _connectionProvider.GetTenant();
 
-        // 1. Base query and static conditions
-        var sqlBuilder = new StringBuilder(@"
-        SELECT id, file_name, data_creazione, content, tenant, stato , allegato
-        FROM docs 
-        WHERE tenant = @Tenant ");
+        var sqlBuilder = new StringBuilder("""
+            SELECT id, file_name, data_creazione, content, tenant, stato, allegato
+            FROM docs
+            WHERE tenant = @Tenant
+            """);
 
-        // 2. Initialize DynamicParameters with static values
         var parametri = new DynamicParameters();
         parametri.Add("Tenant", tenant);
-        
+
+        // Stato = -1 significa "tutti gli stati" (vedi DocService.AddDocAsync);
+        // con il default 0 dei filtri si ottengono solo i documenti aperti.
         if (docFilters.Stato > -1)
         {
             sqlBuilder.Append(" AND stato = @Stato");
             parametri.Add("Stato", docFilters.Stato);
         }
 
-        // 3. Conditionally append SQL and parameters
+        // lower() su entrambi i lati: il case nel JSON non e' normalizzato e cosi' la
+        // condizione combacia con gli indici funzionali ix_bolle_mittente_lower / ix_bolle_numero_lower.
         if (!string.IsNullOrWhiteSpace(docFilters.Fornitore))
         {
-            sqlBuilder.Append(" AND content->'document'->>'mittente' = @Fornitore");
+            sqlBuilder.Append(" AND lower(content->'document'->>'mittente') = lower(@Fornitore)");
             parametri.Add("Fornitore", docFilters.Fornitore);
         }
 
         if (!string.IsNullOrWhiteSpace(docFilters.NumeroDoc))
         {
-            sqlBuilder.Append(" AND content->'document'->>'numero_bolla' = @NumeroBolla");
+            sqlBuilder.Append(" AND lower(content->'document'->>'numero_bolla') = lower(@NumeroBolla)");
             parametri.Add("NumeroBolla", docFilters.NumeroDoc);
         }
 
@@ -193,14 +197,14 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
             sqlBuilder.Append(" AND content->'document'->>'tipo_documento' = @TipoDoc");
             parametri.Add("TipoDoc", docFilters.TipoDoc.ToString());
         }
-        
-        // Append the final semicolon safely
-        sqlBuilder.Append(";");
+
+        sqlBuilder.Append(';');
 
         using var db = await CreaConnessione();
-    
-        var risultati =  await db.QueryAsync<EmmaDoc>(sqlBuilder.ToString(), parametri);
-        return risultati.ToList();
+
+        var risultati = await db.QueryAsync<EmmaDoc>(sqlBuilder.ToString(), parametri);
+
+        return [.. risultati];
     }
 
     public async Task CambiaStatoAsync(CambioStato cambioStato)

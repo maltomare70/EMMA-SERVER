@@ -16,19 +16,20 @@ public class BolleRepository: RepositoryGenerico<Bolle>, IBolleRepository
     {
     }
     
-    public async  Task<List<Bolle?>> GetBolleByFornitore(string fornitore)
+    public async Task<List<Bolle?>> GetBolleByFornitore(string fornitore)
     {
-        string sql = @"SELECT id, file_name, data  FROM bolle 
-                    WHERE data->'document'->>'mittente' = lower(@Mittente);";
-
-        var parametri = new {
-            Mittente = fornitore
-        };
+        // lower() su entrambi i lati: nel JSON il mittente non viene normalizzato in minuscolo.
+        const string sql = """
+            SELECT id, file_name, data
+            FROM bolle
+            WHERE lower(data->'document'->>'mittente') = lower(@Mittente);
+            """;
 
         using var db = await CreaConnessione();
-        
-        var risultati = await db.QueryAsync<Bolle>(sql, parametri);
-        return risultati.ToList();
+
+        var risultati = await db.QueryAsync<Bolle>(sql, new { Mittente = fornitore });
+
+        return [.. risultati];
     }
 
     public async Task<Bolle?> GetBollaAsync(string fornitore, string numeroBolla, string dataBolla)

@@ -30,7 +30,6 @@ public interface IEmailReader
 public class EmailReader : IEmailReader
 {
     private readonly EmailReaderOptions? _emailReaderOptions;
-    private readonly List<EmmaTenant>? _tenants;
 
     private static bool WIP;
     public EmailReader (EmailReaderOptions emailReaderOptions )
@@ -54,6 +53,28 @@ public class EmailReader : IEmailReader
             {
                 string? emma_url = _emailReaderOptions?.ServerUrl;
 
+                // Configurazione dei dati di accesso
+                string? imapServer = _emailReaderOptions?.ImapServerUrl;
+                if (string.IsNullOrWhiteSpace(imapServer))
+                {
+                    Console.WriteLine("Errore: ImapServerUrl non configurato.");
+                    return;
+                }
+
+                int port = _emailReaderOptions?.ImapServerPort ?? 993; // Porta standard per IMAP su SSL
+                string? email = _emailReaderOptions?.ImapUser;
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    Console.WriteLine("Errore: ImapUser non configurato.");
+                    return;
+                }
+                string? password = _emailReaderOptions?.ImapPassword; // NON la password normale
+                if (string.IsNullOrWhiteSpace(password))
+                {
+                    Console.WriteLine("Errore: ImapPassword non configurato.");
+                    return;
+                }
+
                 if (!string.IsNullOrWhiteSpace(emma_url))
                 {
                     //Inizio Elabprazione
@@ -61,12 +82,6 @@ public class EmailReader : IEmailReader
 
                     TenantServiceClient tenantServiceClient = new TenantServiceClient(emma_url, EmmaAdmin.ADMIN, _emailReaderOptions?.AdminPassword!);
                     var tenants = await tenantServiceClient.GetsAsync();
-
-                    // Configurazione dei dati di accesso
-                    string? imapServer = _emailReaderOptions?.ImapServerUrl;
-                    int port = _emailReaderOptions.ImapServerPort; // Porta standard per IMAP su SSL
-                    string? email = _emailReaderOptions.ImapUser;
-                    string? password = _emailReaderOptions.ImapPassword; // NON la password normale
 
                     client.Connect(imapServer, port, true);
                     client.Authenticate(email, password);
@@ -124,7 +139,7 @@ public class EmailReader : IEmailReader
         {
             // .Address restituisce solo "esempio@dominio.com"
             mittenteEmail = mailboxAddress.Address;
-            tenant = tenants.FirstOrDefault(x => x.mail_from.Equals(mittenteEmail, StringComparison.InvariantCultureIgnoreCase));
+            tenant = tenants.FirstOrDefault(x => x.mail_from?.Equals(mittenteEmail, StringComparison.InvariantCultureIgnoreCase) ?? false);
         }
 
         if (tenant is null) return false;
@@ -138,7 +153,7 @@ public class EmailReader : IEmailReader
         {
             if (attachment is MimePart mimePart)
             {
-                string fileName = mimePart.FileName;
+                string fileName = mimePart.FileName ?? string.Empty;
 
                 using (var memoryStream = new MemoryStream())
                 {

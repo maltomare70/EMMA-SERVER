@@ -58,8 +58,12 @@ public class BolleMasterService : IBolleMasterService
         }
         catch (Exception e)
         {
+            Console.WriteLine(e);
             var master = await _bolleMasterRepository.GetIdAsync(id_master.Value);
-            await _bolleMasterRepository.DeleteAsync(master);
+            if (master != null)
+            {
+                await _bolleMasterRepository.DeleteAsync(master);
+            }
             throw;
         }
     }

@@ -55,6 +55,10 @@ public class FornitoriService : IFornitoriService
             //Fornitore all'interno del documento
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             DdtResponse? ddtResponse = JsonSerializer.Deserialize<DdtResponse>(doc.content!, options);
+
+            //Only DDT documents are processed, if not return 0
+            if (ddtResponse?.Document.TipoDocumento != "2") return 0;
+
             var fornitore = ddtResponse?.Document.Mittente;
             if (string.IsNullOrWhiteSpace(fornitore)) return 0;
             
@@ -101,7 +105,12 @@ public class FornitoriService : IFornitoriService
             }
             else
             {
-                return 0;
+                id_fornitore = await AddFornitoreAsync(new EmmaFornitori()
+                {
+                    tenant = doc.tenant,
+                    descrizione = fornitore,
+                    score = 0,
+                });
             }
         }
 

@@ -15,7 +15,7 @@ public interface IDocService
     Task<int?> AddAsync(EmmaDoc doc);
     Task<List<EmmaDoc?>> GetDocsAsync(EmmaDocFilters emmaDocFilters);
     Task<bool?> DeleteAsync(EmmaDoc doc);
-    Task<int?> AddDocAsync(EmmaDocFilters emmaDocFilters,
+    Task<EmmaDoc?> AddDocAsync(EmmaDocFilters emmaDocFilters,
         string json, string fileName, byte[] file_byte, string tenant);
 
     Task AddOrUpdateFornitorieArticoli(int docId);
@@ -118,7 +118,7 @@ public class DocService : IDocService
     }
 
 
-    public async Task<int?> AddDocAsync(EmmaDocFilters emmaDocFilter, string json, 
+    public async Task<EmmaDoc?> AddDocAsync(EmmaDocFilters emmaDocFilter, string json, 
         string fileName, byte[] file_byte, string tenant)
     {
         var doclist = await GetDocsAsync(emmaDocFilter);
@@ -135,13 +135,17 @@ public class DocService : IDocService
         }
 
         //inserisco
-        return await AddAsync((new EmmaDoc()
+        var id =  await AddAsync((new EmmaDoc()
         {
             file_name = fileName,
             content = JsonDocument.Parse(json),
             allegato = file_byte,
             tenant = tenant
         }));
+
+        var newDoc = await _repo.GetIdAsync(id!.Value);
+
+        return newDoc;
     }
 
     public async Task<int> CleanDocAsync()
@@ -189,10 +193,11 @@ public class DocService : IDocService
         // 4. Ciclo sulle righe di dettaglio e sui codici articolo
         foreach (var riga in fattura.FatturaElettronicaBody[0].DatiBeniServizi.DettaglioLinee)
         {
-            ArticoloBolla articoloBolla = new ArticoloBolla();
+            if (riga == null) continue;
 
+            ArticoloBolla articoloBolla = new ArticoloBolla();
             articoloBolla.UnitaMisura = riga.UnitaMisura;
-            articoloBolla.Quantita = riga.Quantita.Value;
+            articoloBolla.Quantita = riga.Quantita!.Value;
             articoloBolla.Descrizione = riga.Descrizione;
             articoloBolla.Codice = riga.CodiceArticolo?.FirstOrDefault()?.CodiceValore ?? string.Empty;
             articoloBolla.Totale = riga.PrezzoTotale;
@@ -246,7 +251,7 @@ public class DocService : IDocService
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         var responseContent = JsonSerializer.Serialize(ddtResponse, options);
 
-        var idDoc = await AddDocAsync(emmaDocFilters,
+        var newDoc = await AddDocAsync(emmaDocFilters,
              responseContent,
             ddtResponse.FileName ?? string.Empty, file_byte, tenant);
 
@@ -258,7 +263,7 @@ public class DocService : IDocService
 
         return new DocResponse()
         {
-            DocId = idDoc is not null ? idDoc.Value : 0,
+            DocId = newDoc is not null ? newDoc.id : 0,
             DdtResponse = ddtResponse,
         };
     }
@@ -328,7 +333,7 @@ public class DocService : IDocService
                 ddtResponse = JsonSerializer.Deserialize<DdtResponse>(responseContent, options);
 
                 //Salvo sul database
-                int? idDoc = 0;
+                EmmaDoc? newDoc = null;
                 if (ddtResponse is not null)
                 {
                     EmmaDocFilters emmaDocFilters = new EmmaDocFilters()
@@ -341,13 +346,20 @@ public class DocService : IDocService
                     };
                     responseContent = JsonSerializer.Serialize(ddtResponse, options);
 
-                    idDoc = await AddDocAsync(emmaDocFilters,
+                    newDoc = await AddDocAsync(emmaDocFilters,
                          responseContent,
                         ddtResponse.FileName ?? string.Empty, file_byte, tenant);
 
                     //**************
                     //LOG SUCCESS AI
                     //**************
+                    string dataFormattata = string.Empty;
+                    var dataRaw = newDoc?.ToDoc()?.DataBolla;
+                    if (!string.IsNullOrEmpty(dataRaw) && DateTime.TryParse(dataRaw, out var parsedDate))
+                        dataFormattata = parsedDate.ToString("dd/MM/yyyy");
+                    else
+                        dataFormattata = dataRaw ?? string.Empty;
+
                     await _logService.AddAsync(new EmmaLog()
                     {
                         stato = 1,
@@ -356,20 +368,20 @@ public class DocService : IDocService
                         token_output = ddtResponse.Costs.OutputTokens,
                         token_tot = ddtResponse.Costs.TotalTokens,
                         cost = ddtResponse.Costs.TotalCostEur,
-                        message = idDoc.ToString(),
+                        message = $"{newDoc?.ToDoc()?.Mittente} - {newDoc?.ToDoc()?.NumeroBolla} - {dataFormattata}",
                         duration = secondiInteri
                     });
 
                     ////--------------------------------------------------------------------------------
                     //Aggiorna Anagrafiche
                     //--------------------------------------------------------------------------------
-                    if (idDoc is not null) await AggiornaAnagrafiche(idDoc.Value);
+                    if (newDoc is not null) await AggiornaAnagrafiche(newDoc.id);
                     ////--------------------------------------------------------------------------------
                 }
 
                 return new DocResponse()
                 {
-                    DocId = idDoc is not null ? idDoc.Value : 0,
+                    DocId = newDoc is not null ? newDoc.id : 0,
                     DdtResponse = ddtResponse,
                 };
             }

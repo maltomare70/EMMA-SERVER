@@ -10,11 +10,11 @@ public record BolleRows: IEntity
     [Write(false)] 
     public DateTime data_creazione { get; set; }
     public int id_bolla { get; init; }
-    public string codice { get; set; }
-    public string descrizione { get; set; }
+    public string? codice { get; set; }
+    public string? descrizione { get; set; }
     public decimal qta { get; init; }
-    public string um { get; set; }
+    public string? um { get; set; }
     public decimal imponibile { get; init; }
-    public string iva { get; set; }
+    public string? iva { get; set; }
     public decimal totale { get; init; }
 }

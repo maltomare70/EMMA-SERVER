@@ -1,5 +1,4 @@
 ﻿using Emma.Batches;
-using EmmaServer.Services;
 
 namespace EmmaServer.Background;
 
@@ -19,7 +18,7 @@ public class CleanDataBackgroundService : BackgroundService
 
     private async Task<bool> IsReadyToRun()
     {
-        var enabled = _config["ImportBatch:Enabled"]?.ToString();
+        var enabled = _config["CleanData:Enabled"]?.ToString();
         Boolean.TryParse(enabled, out bool bEnabled);
 
         return bEnabled;

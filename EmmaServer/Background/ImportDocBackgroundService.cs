@@ -18,7 +18,7 @@ public class ImportDocBackgroundService : BackgroundService
 
     private async Task<bool> IsReadyToRun()
     {
-        var enabled = _config["ImportBatch:Enabled"].ToString();
+        var enabled = _config["ImportBatch:Enabled"]?.ToString();
         Boolean.TryParse(enabled, out bool bEnabled);
 
         return bEnabled;

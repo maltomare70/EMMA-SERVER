@@ -36,7 +36,7 @@ public class UserConnectionProvider : IUserConnectionProvider
             Username = _configuration["Database:UserName"],
             Password = _configuration["Database:Password"],
             SslMode = SslMode.Require,
-            TrustServerCertificate = true,
+            //TrustServerCertificate = true,
             Timeout = 15
         };
 

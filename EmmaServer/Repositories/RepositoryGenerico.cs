@@ -23,8 +23,6 @@ public interface IRepositoryGenerico<T> where T : class, IEntity
 
 public class RepositoryGenerico<T> : IRepositoryGenerico<T> where T : class, IEntity
 {
- 
-    private readonly string? _connectionString;
 
     private readonly IUserConnectionProvider _connectionProvider;
     private readonly string? _tenant;

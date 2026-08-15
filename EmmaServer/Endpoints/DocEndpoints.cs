@@ -1,11 +1,8 @@
 using EmmaServer.Entities;
 using EmmaServer.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Headers;
-using System.Text.Json;
 using System.Security.Claims;
-using System.Threading;
-using System.Diagnostics;
+
 
 namespace EmmaServer.Endpoints;
 

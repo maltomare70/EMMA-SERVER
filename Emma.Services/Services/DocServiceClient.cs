@@ -56,7 +56,7 @@ public class DocServiceClient : ServiceClientBase, IDocServiceClient
 
         var payload = new CambioStato
         {
-            Id = masterDocumento.Id,
+            Id = masterDocumento.Id ?? string.Empty,
             Stato = string.Equals(masterDocumento.StatoDocumento, "Aperto", StringComparison.OrdinalIgnoreCase) ? 1 : 0
         };
 
@@ -71,8 +71,8 @@ public class DocServiceClient : ServiceClientBase, IDocServiceClient
 
         var payload = new CambioTipo
         {
-            Id = masterDocumento.Id,
-            Tipo = int.Parse(masterDocumento.TipDocumento)
+            Id = masterDocumento.Id ?? string.Empty,
+            Tipo = int.Parse(masterDocumento.TipDocumento ?? string.Empty)
         };
 
         return PostAsync(EndpointTipo, payload, error: (response, body) => new HttpRequestException(
@@ -169,8 +169,8 @@ public class DocServiceClient : ServiceClientBase, IDocServiceClient
 
     private static ArticoloBolla ToArticoloBolla(RigheDocumento riga, string? idRiga) => new()
     {
-        Id_Master = riga.IdMaster,
-        Id_Riga = idRiga,
+        Id_Master = riga.IdMaster ?? string.Empty,
+        Id_Riga = idRiga ?? string.Empty,
         Quantita = riga.Qta,
         Descrizione = riga.DescrizioneArticolo ?? string.Empty,
         Codice = riga.CodiceArticolo ?? string.Empty,

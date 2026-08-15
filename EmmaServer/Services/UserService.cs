@@ -37,7 +37,7 @@ public class UserService : IUserService
         EmmaUser emmaUser = new EmmaUser()
         {
             email = user.email.ToLowerInvariant(),
-            pwd = PasswordHelper.GeneraHash(user.pwd),
+            pwd = PasswordHelper.GeneraHash(user.pwd ?? string.Empty),
             tenant = user.tenant
         };
 

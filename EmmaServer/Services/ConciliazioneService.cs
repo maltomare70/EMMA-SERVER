@@ -89,6 +89,7 @@ public class ConciliazioneService : IConciliazioneService
         catch (Exception ex)
         {
             // Servizio Python non raggiungibile: continua senza fuzzy
+            Console.WriteLine($"Errore nel servizio Python: {ex.Message}");
             return new();
         }
     }
@@ -162,10 +163,10 @@ public class ConciliazioneService : IConciliazioneService
                 {
                     stato = 1,
                     tenant = tenant,
-                    token_input = results.Costs.PromptTokens,
-                    token_output = results.Costs.OutputTokens,
-                    token_tot = results.Costs.TotalTokens,
-                    cost = results.Costs.TotalCostEur,
+                    token_input = results!.Costs.PromptTokens,
+                    token_output = results!.Costs.OutputTokens,
+                    token_tot = results!.Costs.TotalTokens,
+                    cost = results!.Costs.TotalCostEur,
                     message = $"{inputConciliazione.Fornitore}",
                     duration = secondiInteri
                 });
