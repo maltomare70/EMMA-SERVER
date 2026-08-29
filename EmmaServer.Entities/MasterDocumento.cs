@@ -34,4 +34,16 @@ public class RigheDocumento
     public decimal Totale { get; set; }
     
     public string TestoBottone => IdRiga == "" ? "Aggiungi" : "Elimina";
+
+    public List<RigheDocumentoConciliazione> RigheDocumentoConciliazione { get; set; } = new List<RigheDocumentoConciliazione>();
+}
+
+public class RigheDocumentoConciliazione
+{
+    public string? IdMaster { get; set; }
+    public string? IdRiga { get; set; }
+    public decimal Qta { get; set; }
+    public decimal Qta_conc { get; set; }
+    public decimal Delta { get; set; }
+    public decimal Flag { get; set; }
 }

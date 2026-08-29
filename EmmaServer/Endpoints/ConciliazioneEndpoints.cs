@@ -96,7 +96,39 @@ public static class ConciliazioneEndpoints
 
             return Results.Ok();
         }).WithName("SalvaConciliazione");
+
+
+
+        app.MapGet("/api/v1/conciliazione/master/{idMaster}", async (ClaimsPrincipal claims, [FromRoute] string idMaster, [FromServices] IConciliaRigheService conciliaRigheService) =>
+        {
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+
+            string? tenant = claims.FindFirstValue("tenant");
+            if (string.IsNullOrWhiteSpace(tenant)) return Results.BadRequest("Tenant non presente.");
+
+            var righe = await conciliaRigheService.GetRigheConciliazioneAsync(idMaster, string.Empty, tenant);
+
+            return Results.Ok(righe);
+
+        }).WithName("GetRigheConciliazioneOnlyMaster");
+
+        /// Restituisce una o più riga di conciliazione specifica per un determinato idMaster e idRiga
+        app.MapGet("/api/v1/conciliazione/master/{idMaster}/riga/{idRiga}", async (ClaimsPrincipal claims, [FromRoute] string idMaster, [FromRoute] string idRiga, [FromServices] IConciliaRigheService conciliaRigheService) =>
+        {
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+
+            string? tenant = claims.FindFirstValue("tenant");
+            if (string.IsNullOrWhiteSpace(tenant)) return Results.BadRequest("Tenant non presente.");
+
+            var righe = await conciliaRigheService.GetRigheConciliazioneAsync(idMaster, idRiga, tenant);
+
+            return Results.Ok(righe);
+
+        }).WithName("GetRigheConciliazione");
+
     }
+
+
 
     //public static void MapConciliazioneRoutes(this IEndpointRouteBuilder app)
     //{

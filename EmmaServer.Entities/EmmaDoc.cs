@@ -3,6 +3,7 @@ using System.Text.Json;
 namespace EmmaServer.Entities;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 [Table("docs")] 
 public record EmmaDoc: IEntity
@@ -17,7 +18,6 @@ public record EmmaDoc: IEntity
     public string tenant { get; set; } = string.Empty;
     public int stato { get; set; } = 0;
 
-
     public DatiBolla? ToDoc()
     {
         // Fix: Use RootElement to properly deserialize a JsonDocument
@@ -26,6 +26,14 @@ public record EmmaDoc: IEntity
     }
     
 }
+
+public class InfoConciliazione
+{
+    public string Id { get; set; } = string.Empty;
+    public string IdBolla { get; set; } = string.Empty;
+    public string IdFattura { get; set; } = string.Empty;
+}
+
 
 public class CambioStato
 {

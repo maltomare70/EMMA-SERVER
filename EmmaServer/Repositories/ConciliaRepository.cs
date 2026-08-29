@@ -7,6 +7,8 @@ public interface IConciliaRigheRepository : IRepositoryGenerico<EmmaConciliaRigh
 {
     Task<IEnumerable<EmmaConciliaRighe>> GetAllByTenantAsync(string tenant);
     Task DeleteAsync(string id_riga, string tenant);
+
+    Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster, string idRiga, string tenant);
 }
 
 public class ConciliaRigheRepository : RepositoryGenerico<EmmaConciliaRighe>, IConciliaRigheRepository
@@ -37,5 +39,29 @@ public class ConciliaRigheRepository : RepositoryGenerico<EmmaConciliaRighe>, IC
 
         // Eseguiamo una normale query Dapper (non Contrib)
         await db.QueryAsync(sql, new { Tenant = tenant, Id_riga = id_riga });
+    }
+
+    public async Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster, string idRiga, string tenant)
+    {
+        if (string.IsNullOrWhiteSpace(idRiga))
+        {
+            // Query SQL specifica per questa ricerca (Postgres usa il minuscolo di default)
+            const string sql = "SELECT * FROM conciliarighe WHERE tenant = @Tenant AND id_master = @IdMaster;";
+            // Sfruttiamo il metodo del padre per ottenere la connessione al database del tenant corrente
+            using var db = await CreaConnessione();
+            // Eseguiamo una normale query Dapper (non Contrib)
+            var result = await db.QueryAsync<EmmaConciliaRighe>(sql, new { Tenant = tenant, IdMaster = idMaster });
+            return result.ToList();
+        }
+        else
+        {
+            // Query SQL specifica per questa ricerca (Postgres usa il minuscolo di default)
+            const string sql = "SELECT * FROM conciliarighe WHERE tenant = @Tenant AND id_master = @IdMaster AND id_riga = @IdRiga;";
+            // Sfruttiamo il metodo del padre per ottenere la connessione al database del tenant corrente
+            using var db = await CreaConnessione();
+            // Eseguiamo una normale query Dapper (non Contrib)
+            var result = await db.QueryAsync<EmmaConciliaRighe>(sql, new { Tenant = tenant, IdMaster = idMaster, IdRiga = idRiga });
+            return result.ToList();
+        }
     }
 }

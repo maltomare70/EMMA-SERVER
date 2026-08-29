@@ -8,3 +8,5 @@ Emma.Batches/obj
 Emma.Services/obj
 Emma.Batches/bin
 Emma.Services/bin
+EmmaServer.Tests/obj
+EmmaServer.Tests/bin

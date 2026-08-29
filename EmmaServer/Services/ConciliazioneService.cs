@@ -1,5 +1,6 @@
 ﻿using EmmaServer.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
 namespace EmmaServer.Services;

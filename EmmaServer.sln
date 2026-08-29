@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.7.11925.98 stable
+VisualStudioVersion = 18.7.11925.98
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmmaServer", "EmmaServer\EmmaServer.csproj", "{6ED3D613-4314-4E86-9CD0-DBFAABD92F9F}"
 EndProject
@@ -15,6 +15,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emma.Batches", "Emma.Batches\Emma.Batches.csproj", "{0BD36F13-10A0-481B-8DBA-3FFD8126258F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emma.Services", "Emma.Services\Emma.Services.csproj", "{46921118-29F5-667E-096B-4E8132404044}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmmaServer.Tests", "EmmaServer.Tests\EmmaServer.Tests.csproj", "{3C19D84F-64E8-439E-8F7B-600A760D066B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,6 +40,10 @@ Global
 		{46921118-29F5-667E-096B-4E8132404044}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{46921118-29F5-667E-096B-4E8132404044}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{46921118-29F5-667E-096B-4E8132404044}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C19D84F-64E8-439E-8F7B-600A760D066B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C19D84F-64E8-439E-8F7B-600A760D066B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C19D84F-64E8-439E-8F7B-600A760D066B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C19D84F-64E8-439E-8F7B-600A760D066B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

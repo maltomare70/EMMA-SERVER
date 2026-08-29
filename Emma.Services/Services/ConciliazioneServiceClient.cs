@@ -1,4 +1,4 @@
-using Emma.Services.Http;
+﻿using Emma.Services.Http;
 using EmmaServer.Entities;
 
 namespace EmmaClientAv.Services;
@@ -10,12 +10,17 @@ public interface IConciliazioneServiceClient
     Task SalvaConciliazione(List<RigaConciliazione> bolle, List<RigaConciliazione> fatture);
 
     Task<List<EmmaConciliaRighe>> GetAllAsync();
+
+    Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster);
+    Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster, string idRiga);
 }
 
 public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServiceClient
 {
     private const string Endpoint = "/api/v1/conciliazione";
     private const string EndpointSalva = "/api/v1/salva-conciliazione";
+    private const string EndpointMasterRiga = Endpoint + "/master/{0}/riga/{1}";
+    private const string EndpointMaster = Endpoint + "/master/{0}";
 
     public ConciliazioneServiceClient(string url, string user, string password, string tenant = "")
         : base(url, user, password, tenant)
@@ -30,6 +35,31 @@ public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServi
     /// <summary>In caso di errore restituisce una lista vuota, non lancia.</summary>
     public async Task<List<EmmaConciliaRighe>> GetAllAsync()
         => await TryGetAsync<List<EmmaConciliaRighe>>(Endpoint).ConfigureAwait(false) ?? new List<EmmaConciliaRighe>();
+
+    /// <summary>
+    /// Restituisce le righe di conciliazione per uno specifico idMaster/idRiga.
+    /// In caso di errore restituisce una lista vuota, non lancia.
+    /// </summary>
+    public async Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster, string idRiga)
+    {
+        var path = string.Format(
+            EndpointMasterRiga,
+            Uri.EscapeDataString(idMaster ?? string.Empty),
+            Uri.EscapeDataString(idRiga ?? string.Empty));
+
+        return await TryGetAsync<List<EmmaConciliaRighe>>(path).ConfigureAwait(false)
+               ?? new List<EmmaConciliaRighe>();
+    }
+
+    public async Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster)
+    {
+        var path = string.Format(
+            EndpointMaster,
+            Uri.EscapeDataString(idMaster ?? string.Empty));
+
+        return await TryGetAsync<List<EmmaConciliaRighe>>(path).ConfigureAwait(false)
+               ?? new List<EmmaConciliaRighe>();
+    }
 
     /// <summary>
     /// Esegue una conciliazione per ogni fornitore presente in bolle o fatture,
