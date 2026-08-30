@@ -8,4 +8,6 @@ public class EmmaDocFilters
     
     public int TipoDoc { get; set; } = 0;
     public int Stato { get; set; } = 0;
+
+    public string Id { get; set; } = string.Empty;
 }

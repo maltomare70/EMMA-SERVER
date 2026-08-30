@@ -46,4 +46,6 @@ public class RigheDocumentoConciliazione
     public decimal Qta_conc { get; set; }
     public decimal Delta { get; set; }
     public decimal Flag { get; set; }
+    public string? numero_doc_abbinamento { get; init; }
+    public string? data_doc_abbinamento { get; init; } 
 }

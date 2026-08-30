@@ -101,9 +101,9 @@ public class EmmaRepository: IEmmaRepository
         var tableAttr = typeof(T).GetCustomAttribute<TableAttribute>();
         string tableName = tableAttr != null ? tableAttr.Name : typeof(T).Name;
 
-        var proprietàDaEscludere = new[] { "IsDirty"};
+        var proprietaDaEscludere = new[] { "IsDirty"};
         var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => !proprietàDaEscludere.Contains(p.Name)).ToArray();
+            .Where(p => !proprietaDaEscludere.Contains(p.Name)).ToArray();
         var columnDefinitions = new StringBuilder();
 
         foreach (var prop in properties)

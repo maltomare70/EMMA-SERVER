@@ -11,8 +11,8 @@ public interface IConciliazioneServiceClient
 
     Task<List<EmmaConciliaRighe>> GetAllAsync();
 
-    Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster);
-    Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster, string idRiga);
+    Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster);
+    Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster, string idRiga);
 }
 
 public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServiceClient
@@ -40,25 +40,25 @@ public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServi
     /// Restituisce le righe di conciliazione per uno specifico idMaster/idRiga.
     /// In caso di errore restituisce una lista vuota, non lancia.
     /// </summary>
-    public async Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster, string idRiga)
+    public async Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster, string idRiga)
     {
         var path = string.Format(
             EndpointMasterRiga,
             Uri.EscapeDataString(idMaster ?? string.Empty),
             Uri.EscapeDataString(idRiga ?? string.Empty));
 
-        return await TryGetAsync<List<EmmaConciliaRighe>>(path).ConfigureAwait(false)
-               ?? new List<EmmaConciliaRighe>();
+        return await TryGetAsync<List<EmmaConciliaRigheDto>>(path).ConfigureAwait(false)
+               ?? new List<EmmaConciliaRigheDto>();
     }
 
-    public async Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster)
+    public async Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster)
     {
         var path = string.Format(
             EndpointMaster,
             Uri.EscapeDataString(idMaster ?? string.Empty));
 
-        return await TryGetAsync<List<EmmaConciliaRighe>>(path).ConfigureAwait(false)
-               ?? new List<EmmaConciliaRighe>();
+        return await TryGetAsync<List<EmmaConciliaRigheDto>>(path).ConfigureAwait(false)
+               ?? new List<EmmaConciliaRigheDto>();
     }
 
     /// <summary>

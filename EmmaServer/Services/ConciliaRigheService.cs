@@ -8,7 +8,7 @@ public interface IConciliaRigheService
     Task<int?> AddAsync(EmmaConciliaRighe riga);
     Task<IEnumerable<EmmaConciliaRighe>> GetAllByTenantAsync(string tenant);
     Task DeleteAsync(string id_riga, string tenant);
-    Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster, string idRiga, string tenant);
+    Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster, string idRiga, string tenant);
 }
 
 public class ConciliaRigheService : IConciliaRigheService
@@ -33,7 +33,7 @@ public class ConciliaRigheService : IConciliaRigheService
         await _repo.DeleteAsync(id_riga, tenant);
     }
 
-    public async Task<List<EmmaConciliaRighe>> GetRigheConciliazioneAsync(string idMaster, string idRiga, string tenant)
+    public async Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster, string idRiga, string tenant)
     {
         return await _repo.GetRigheConciliazioneAsync(idMaster, idRiga, tenant);  
     }

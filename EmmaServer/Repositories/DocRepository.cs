@@ -198,6 +198,12 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
             parametri.Add("TipoDoc", docFilters.TipoDoc.ToString());
         }
 
+        if (!string.IsNullOrWhiteSpace(docFilters.Id))
+        {
+            sqlBuilder.Append(" AND content->'document'->>'id' = @Id");
+            parametri.Add("Id", docFilters.Id);
+        }
+
         sqlBuilder.Append(';');
 
         using var db = await CreaConnessione();
