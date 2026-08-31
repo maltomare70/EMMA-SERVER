@@ -1,4 +1,4 @@
-using EmmaServer.Entities;
+using EmmaServer.Entities.Dtos;
 using EmmaServer.Tests.Infrastructure;
 
 namespace EmmaServer.Tests;

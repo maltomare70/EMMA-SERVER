@@ -1,5 +1,6 @@
 using System.Text.Json;
 using EmmaServer.Entities;
+using EmmaServer.Entities.Dtos;
 
 namespace EmmaServer.Tests.Infrastructure;
 

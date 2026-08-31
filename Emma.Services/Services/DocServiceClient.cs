@@ -1,5 +1,6 @@
 using Emma.Services.Http;
 using EmmaServer.Entities;
+using EmmaServer.Entities.Dtos;
 using Polly;
 using Polly.Retry;
 using System.Net;

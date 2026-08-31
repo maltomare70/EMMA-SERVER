@@ -1,5 +1,4 @@
-﻿
-namespace EmmaServer.Entities;
+﻿namespace EmmaServer.Entities.Dtos;
 
 public class PayloadRiconciliazione
 {

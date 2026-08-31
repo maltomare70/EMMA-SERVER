@@ -2,6 +2,7 @@
 using Emma.Services.Services;
 using EmmaClientAv.Services;
 using EmmaServer.Entities;
+using EmmaServer.Entities.Dtos;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;

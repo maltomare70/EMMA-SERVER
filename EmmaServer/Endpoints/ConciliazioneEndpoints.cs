@@ -1,5 +1,4 @@
-﻿
-using EmmaServer.Entities;
+﻿using EmmaServer.Entities.Dtos;
 using EmmaServer.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -39,7 +38,7 @@ public static class ConciliazioneEndpoints
 
 
         app.MapPost("/api/v1/salva-conciliazione", async (
-            [FromBody] PayloadRiconciliazione payload, [FromServices] IConciliaRigheService conciliaRigheService, ClaimsPrincipal claims) =>
+            [FromBody] PayloadRiconciliazione payload, [FromServices] IConciliaRigheService conciliaRigheService, ClaimsPrincipal claims, [FromServices] IDocService docService) =>
         {
             if (claims.Identity == null || !claims.Identity.IsAuthenticated)
                 return Results.BadRequest("Utente non autorizzato");
@@ -47,52 +46,8 @@ public static class ConciliazioneEndpoints
             string? tenant = claims.FindFirstValue("tenant");
             if (string.IsNullOrWhiteSpace(tenant)) return Results.BadRequest("No tenant.");
 
-            foreach (var b in payload.bolle)
-            {
-                var item = new EmmaConciliaRighe()
-                {
-                    codice = payload.codice ?? string.Empty,
-                    delta = b.Qta - b.Qta_Conc,
-                    flag = b.Selezionato ? 1 : 0,
-                    id_fornitore = b.Fornitore ?? string.Empty,
-                    id_master = b.IdMaster ?? string.Empty,
-                    id_riga = b.IdRiga ?? string.Empty,
-                    note = b.Note ?? string.Empty,
-                    qta = b.Qta,
-                    stato = b.Stato ?? string.Empty,
-                    tipo_doc = 3,
-                    qta_canc = b.Qta_Conc,
-                    tenant = tenant
-                };
+            await conciliaRigheService.SalvaConcilizione(payload, tenant);
 
-                await conciliaRigheService.DeleteAsync(item.id_riga, tenant);
-
-                await conciliaRigheService.AddAsync(item);
-            }
-
-
-            foreach (var b in payload.fatture)
-            {
-                var item = new EmmaConciliaRighe()
-                {
-                    codice = payload.codice ?? string.Empty,
-                    delta = b.Qta - b.Qta_Conc,
-                    flag = b.Selezionato ? 1 : 0,
-                    id_fornitore = b.Fornitore ?? string.Empty,
-                    id_master = b.IdMaster ?? string.Empty,
-                    id_riga = b.IdRiga ?? string.Empty,
-                    note = b.Note ?? string.Empty,
-                    qta = b.Qta,
-                    stato = b.Stato ?? string.Empty,
-                    tipo_doc = 3,
-                    qta_canc = b.Qta_Conc,
-                    tenant = tenant
-                };
-
-                await conciliaRigheService.DeleteAsync(item.id_riga, tenant);
-
-                await conciliaRigheService.AddAsync(item);
-            }
 
             return Results.Ok();
         }).WithName("SalvaConciliazione");
@@ -127,21 +82,4 @@ public static class ConciliazioneEndpoints
         }).WithName("GetRigheConciliazione");
 
     }
-
-
-
-    //public static void MapConciliazioneRoutes(this IEndpointRouteBuilder app)
-    //{
-    //    app.MapPost("/api/v1/conciliazione", async (
-    //    [FromBody] PayloadRiconciliazione payload, [FromServices] IConciliazioneService conciliazione, ClaimsPrincipal claims) =>
-    //    {
-    //        if (claims.Identity == null || !claims.Identity.IsAuthenticated)
-    //            return Results.BadRequest("Utente non autorizzato");
-
-    //        var result = await conciliazione.GetConciliazione(payload.bolle, payload.fatture);
-    //        return Results.Ok(result);
-    //    }).WithName("Conciliazione");
-    //}
-
-
 }

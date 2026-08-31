@@ -1,6 +1,6 @@
 using Emma.Services.Http;
 using EmmaServer.Entities;
-
+using EmmaServer.Entities.Dtos;
 namespace Emma.Services.Services;
 
 public interface IUserServiceClient

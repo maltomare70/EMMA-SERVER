@@ -2,6 +2,7 @@ using EmmaServer.Entities;
 using Dapper;
 using System.Text;
 using System.Text.Json;
+using EmmaServer.Entities.Dtos;
 
 
 namespace EmmaServer.Repositories;

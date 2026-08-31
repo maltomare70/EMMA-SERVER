@@ -1,6 +1,6 @@
 using EmmaServer.Entities;
 using Dapper; // Necessario per usare il metodo esteso QueryAsync
-
+using EmmaServer.Entities.Dtos;
 
 namespace EmmaServer.Repositories;
 

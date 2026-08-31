@@ -1,4 +1,5 @@
 using EmmaServer.Entities;
+using EmmaServer.Entities.Dtos;
 using EmmaServer.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

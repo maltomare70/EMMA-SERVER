@@ -2,6 +2,7 @@ using EmmaServer.Entities;
 using EmmaServer.Repositories;
 using System.Text.Json;
 using FuzzySharp;
+using EmmaServer.Entities.Dtos;
 
 
 namespace EmmaServer.Services;

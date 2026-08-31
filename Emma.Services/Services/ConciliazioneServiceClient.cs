@@ -1,5 +1,6 @@
 ﻿using Emma.Services.Http;
 using EmmaServer.Entities;
+using EmmaServer.Entities.Dtos;
 
 namespace EmmaClientAv.Services;
 

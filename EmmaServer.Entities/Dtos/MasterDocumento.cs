@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-namespace EmmaServer.Entities;
+namespace EmmaServer.Entities.Dtos;
 
 public class MasterDocumento
 {

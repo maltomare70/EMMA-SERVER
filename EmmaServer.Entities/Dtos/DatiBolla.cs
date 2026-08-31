@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace EmmaServer.Entities;
+namespace EmmaServer.Entities.Dtos;
 
 
 // Questo rappresenta il JSON principale che unisce i costi e i dati estratti

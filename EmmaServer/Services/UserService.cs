@@ -1,6 +1,7 @@
 using EmmaServer.Entities;
 using EmmaServer.Helpers;
 using  EmmaServer.Repositories;
+using EmmaServer.Entities.Dtos;
 
 namespace EmmaServer.Services;
 

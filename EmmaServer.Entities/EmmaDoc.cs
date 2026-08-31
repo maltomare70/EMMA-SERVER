@@ -1,6 +1,8 @@
 using Dapper.Contrib.Extensions;
 using System.Text.Json;
 namespace EmmaServer.Entities;
+
+using EmmaServer.Entities.Dtos;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -27,22 +29,4 @@ public record EmmaDoc: IEntity
     
 }
 
-public class InfoConciliazione
-{
-    public string Id { get; set; } = string.Empty;
-    public string IdBolla { get; set; } = string.Empty;
-    public string IdFattura { get; set; } = string.Empty;
-}
 
-
-public class CambioStato
-{
-    public string Id { get; set; } = string.Empty;
-    public int Stato { get; set; } = 0;
-}
-
-public class CambioTipo
-{
-    public string Id { get; set; } = string.Empty;
-    public int Tipo { get; set; } = 0;
-}

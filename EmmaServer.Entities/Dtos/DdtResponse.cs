@@ -2,7 +2,7 @@ using System.Reflection.Metadata;
 using System.Text.Json.Serialization;
 using System.Text;
 using System.Text.Json;
-namespace EmmaServer.Entities;
+namespace EmmaServer.Entities.Dtos;
 
 public class DdtResponse
 {

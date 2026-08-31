@@ -18,10 +18,3 @@ public record EmmaUser : IEntity
     public string? tenant { get; set; }
 }
 
-public class CambiaPasswordRequest
-{
-    public string email { get; init; } = string.Empty;
-    public string oldPassword { get; init; } = string.Empty;
-    public string newPassword { get; init; } = string.Empty;
-    public string hash { get; set; } = string.Empty;
-}

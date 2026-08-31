@@ -1,4 +1,4 @@
-namespace EmmaServer.Entities;
+namespace EmmaServer.Entities.Dtos;
 
 public record PasswordRequest(string Password);
 

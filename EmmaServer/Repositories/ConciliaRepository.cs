@@ -1,6 +1,6 @@
 ﻿using Dapper;
 using EmmaServer.Entities;
-
+using EmmaServer.Entities.Dtos;
 namespace EmmaServer.Repositories;
 
 public interface IConciliaRigheRepository : IRepositoryGenerico<EmmaConciliaRighe>

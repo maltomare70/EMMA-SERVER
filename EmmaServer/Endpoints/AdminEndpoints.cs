@@ -4,6 +4,7 @@ using EmmaServer.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using EmmaServer.Entities;
+using EmmaServer.Entities.Dtos;
 
 namespace EmmaServer.Endpoints;
 

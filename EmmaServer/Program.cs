@@ -3,7 +3,7 @@ using Emma.Batches;
 using EmmaServer;
 using EmmaServer.Background;
 using EmmaServer.Endpoints;
-using EmmaServer.Entities;
+using EmmaServer.Entities.Dtos;
 using EmmaServer.Repositories;
 using EmmaServer.Services;
 using Microsoft.AspNetCore.Authentication;

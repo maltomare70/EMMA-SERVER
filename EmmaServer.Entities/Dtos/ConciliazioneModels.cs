@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace EmmaServer.Entities;
+namespace EmmaServer.Entities.Dtos;
 
 
 // ==========================================

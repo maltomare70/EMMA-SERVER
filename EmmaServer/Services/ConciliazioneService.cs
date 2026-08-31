@@ -1,4 +1,5 @@
 ﻿using EmmaServer.Entities;
+using EmmaServer.Entities.Dtos;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
