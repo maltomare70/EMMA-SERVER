@@ -1,8 +1,9 @@
-using Emma.Services.Http;
+﻿using Emma.Services.Http;
 using EmmaServer.Entities;
 using EmmaServer.Entities.Dtos;
 using Polly;
 using Polly.Retry;
+using Polly.Timeout;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -18,7 +19,7 @@ public interface IDocServiceClient
     Task<bool> InviaAddAllApi(RigheDocumento riga);
     Task InviaModificaAllApi(ArticoloBolla articoloBolla);
     Task<bool> InviaEliminazioneAllApi(RigheDocumento riga);
-    Task<bool> PingAsync();
+    Task<bool> PingAsync(CancellationToken ct = default);
     Task<DatiBolla?> InviaFileAsync(Stream fileStream, string fileName, CancellationToken ct = default);
     Task CleanDocs();
 }
@@ -45,8 +46,38 @@ public class DocServiceClient : ServiceClientBase, IDocServiceClient
     // Serve per forzare l'avvio del server nella versione free
     // poi questa chiamata va eliminata che non serve.
     // NB: e' l'unica chiamata senza autenticazione.
-    public Task<bool> PingAsync()
-        => TrySendAsync(HttpMethod.Get, EndpointHealth, authenticate: false);
+    //
+    // Il server free puo' impiegare qualche secondo ad accettare connessioni:
+    // fino a 3 tentativi complessivi, con un budget di attesa massimo di 10 secondi.
+    // Non lancia mai: qualunque esito negativo diventa false.
+    public async Task<bool> PingAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            using HttpResponseMessage response = await PingRetryPipeline.ExecuteAsync(
+                async token => await SendAsync(
+                        HttpMethod.Get, EndpointHealth, authenticate: false, ct: token)
+                    .ConfigureAwait(false),
+                ct).ConfigureAwait(false);
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (TimeoutRejectedException)
+        {
+            // Scaduto il budget complessivo di PingTimeout.
+            return false;
+        }
+        catch (HttpRequestException)
+        {
+            // Server non raggiungibile dopo tutti i tentativi.
+            return false;
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            // Timeout della singola richiesta (non annullamento del chiamante).
+            return false;
+        }
+    }
 
     public async Task<List<EmmaDoc>> GetDocsAsync(EmmaDocFilters docFilters)
         => await PostAsync<List<EmmaDoc>>(EndpointDoc, docFilters).ConfigureAwait(false) ?? new List<EmmaDoc>();
@@ -180,6 +211,32 @@ public class DocServiceClient : ServiceClientBase, IDocServiceClient
         UnitaMisura = riga.UnitaMisura ?? string.Empty,
         Iva = riga.IVA ?? string.Empty
     };
+
+    /// <summary>Budget complessivo del ping: oltre questo tempo si rinuncia.</summary>
+    private static readonly TimeSpan PingTimeout = TimeSpan.FromSeconds(10);
+
+    // Pipeline del ping: 3 tentativi in tutto entro PingTimeout.
+    // Il timeout e' esterno al retry, quindi limita la somma di chiamate e attese.
+    private static readonly ResiliencePipeline<HttpResponseMessage> PingRetryPipeline =
+        new ResiliencePipelineBuilder<HttpResponseMessage>()
+            .AddTimeout(PingTimeout)
+            .AddRetry(new RetryStrategyOptions<HttpResponseMessage>
+            {
+                ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
+                    .Handle<HttpRequestException>()
+                    .Handle<TaskCanceledException>()
+                    .HandleResult(r => !r.IsSuccessStatusCode),
+                MaxRetryAttempts = 2,               // 1 chiamata iniziale + 2 retry = 3 tentativi
+                Delay = TimeSpan.FromSeconds(1),    // 1s, 2s: sta dentro i 10 secondi
+                BackoffType = DelayBackoffType.Exponential,
+                UseJitter = true,
+                OnRetry = args =>
+                {
+                    args.Outcome.Result?.Dispose(); // libera la response scartata
+                    return default;
+                }
+            })
+            .Build();
 
     // Pipeline condivisa (thread-safe, va creata una sola volta)
     private static readonly ResiliencePipeline<HttpResponseMessage> UploadRetryPipeline =
