@@ -8,9 +8,9 @@ public interface IConciliazioneServiceClient
 {
     Task<List<ConciliazioneResponse>> GetConciliazione(string tipo,List<RigaConciliazione> bolle, List<RigaConciliazione> fatture);
 
-    Task SalvaConciliazione(List<RigaConciliazione> bolle, List<RigaConciliazione> fatture);
+    Task SalvaConciliazione(string tipo, List<RigaConciliazione> bolle, List<RigaConciliazione> fatture);
 
-    Task<List<EmmaConciliaRighe>> GetAllAsync();
+    Task<List<EmmaConciliaRighe>> GetAllAsync(string tipo);
 
     Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster);
     Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster, string idRiga);
@@ -34,8 +34,10 @@ public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServi
     }
 
     /// <summary>In caso di errore restituisce una lista vuota, non lancia.</summary>
-    public async Task<List<EmmaConciliaRighe>> GetAllAsync()
-        => await TryGetAsync<List<EmmaConciliaRighe>>(Endpoint).ConfigureAwait(false) ?? new List<EmmaConciliaRighe>();
+    public async Task<List<EmmaConciliaRighe>> GetAllAsync(string tipo)
+    {
+        return await TryGetAsync<List<EmmaConciliaRighe>>($"{Endpoint}?tipo={Uri.EscapeDataString(tipo ?? string.Empty)}").ConfigureAwait(false) ?? new List<EmmaConciliaRighe>();
+    }
 
     /// <summary>
     /// Restituisce le righe di conciliazione per uno specifico idMaster/idRiga.
@@ -106,11 +108,12 @@ public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServi
         return results;
     }
 
-    public Task SalvaConciliazione(List<RigaConciliazione> bolle, List<RigaConciliazione> fatture)
+    public Task SalvaConciliazione(string tipo, List<RigaConciliazione> bolle, List<RigaConciliazione> fatture)
     {
         var payload = new PayloadRiconciliazione
         {
             codice = Guid.NewGuid().ToString(),
+            tipo = tipo,
             bolle = bolle,
             fatture = fatture
         };

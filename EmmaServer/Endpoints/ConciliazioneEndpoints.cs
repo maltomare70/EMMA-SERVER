@@ -10,16 +10,15 @@ public static class ConciliazioneEndpoints
 
     public static void MapConciliazioneRoutes(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/v1/conciliazione", async (ClaimsPrincipal claims, [FromServices] IConciliaRigheService conciliaRigheService) =>
+        app.MapGet("/api/v1/conciliazione", async ([FromQuery] string? tipo, ClaimsPrincipal claims, [FromServices] IConciliaRigheService conciliaRigheService) =>
         {
             if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
 
             string? tenant = claims.FindFirstValue("tenant");
             if (string.IsNullOrWhiteSpace(tenant)) return Results.BadRequest("Tenant non presente.");
 
-            var logs = await conciliaRigheService.GetAllByTenantAsync(tenant);
-
-            return Results.Ok(logs);
+            var items = await conciliaRigheService.GetAllByTenantAsync(tenant, tipo ?? string.Empty);
+            return Results.Ok(items);
         })
         .WithName("GetConciliazioneRigheByTenant");
 

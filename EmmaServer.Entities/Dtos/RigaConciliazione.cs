@@ -3,6 +3,7 @@
 public class PayloadRiconciliazione
 {
     public string codice { get; set; } = string.Empty;
+    public string tipo { get; set; } = string.Empty;
     public List<RigaConciliazione> bolle { get; set; } = new();
     public List<RigaConciliazione> fatture { get; set; } = new();
 }

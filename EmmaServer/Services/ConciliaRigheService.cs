@@ -7,7 +7,7 @@ namespace EmmaServer.Services;
 public interface IConciliaRigheService
 {
     Task<int?> AddAsync(EmmaConciliaRighe riga);
-    Task<IEnumerable<EmmaConciliaRighe>> GetAllByTenantAsync(string tenant);
+    Task<IEnumerable<EmmaConciliaRighe>> GetAllByTenantAsync(string tenant, string tipo);
     Task DeleteAsync(string id_riga, string tenant);
     Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster, string idRiga, string tenant);
     Task SalvaConcilizione(PayloadRiconciliazione payload, string tenant);
@@ -26,9 +26,15 @@ public class ConciliaRigheService : IConciliaRigheService
     {
         return await _repo.AddAsync(riga);
     }
-    public async Task<IEnumerable<EmmaConciliaRighe>> GetAllByTenantAsync(string tenant)
-    {
-        return await _repo.GetAllTenantAsync(tenant);
+    public async Task<IEnumerable<EmmaConciliaRighe>> GetAllByTenantAsync(string tenant, string tipo)
+    {                
+        if (string.IsNullOrWhiteSpace(tipo)) return await _repo.GetAllTenantAsync(tenant);
+
+        else
+        {
+            var items =  await _repo.GetAllByTenantAsync(tenant);
+            return items.Where(x => x.tipo_doc == (tipo.Equals("ORDINI-BOLLE", StringComparison.OrdinalIgnoreCase) ? 1 : 2));
+        }
     }
     public async  Task DeleteAsync(string id_riga, string tenant)
     {
@@ -42,6 +48,8 @@ public class ConciliaRigheService : IConciliaRigheService
 
     public async Task SalvaConcilizione(PayloadRiconciliazione payload, string tenant)
     {
+        string tipo = payload.tipo ?? string.Empty;
+
         foreach (var b in payload.bolle)
         {
             var item = new EmmaConciliaRighe()
@@ -55,7 +63,7 @@ public class ConciliaRigheService : IConciliaRigheService
                 note = b.Note ?? string.Empty,
                 qta = b.Qta,
                 stato = b.Stato ?? string.Empty,
-                tipo_doc = (int)TipoDocEnum.DDT,
+                tipo_doc = tipo.Equals("ORDINI-BOLLE", StringComparison.OrdinalIgnoreCase) ? 1 : 2,
                 qta_canc = b.Qta_Conc,
                 tenant = tenant
             };
@@ -79,7 +87,7 @@ public class ConciliaRigheService : IConciliaRigheService
                 note = b.Note ?? string.Empty,
                 qta = b.Qta,
                 stato = b.Stato ?? string.Empty,
-                tipo_doc = (int)TipoDocEnum.Fattura,
+                tipo_doc = tipo.Equals("ORDINI-BOLLE", StringComparison.OrdinalIgnoreCase) ? 1 : 2,
                 qta_canc = b.Qta_Conc,
                 tenant = tenant
             };
