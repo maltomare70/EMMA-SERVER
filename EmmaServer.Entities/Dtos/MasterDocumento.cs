@@ -35,7 +35,8 @@ public class RigheDocumento
     
     public string TestoBottone => IdRiga == "" ? "Aggiungi" : "Elimina";
 
-    public List<RigheDocumentoConciliazione> RigheDocumentoConciliazione { get; set; } = new List<RigheDocumentoConciliazione>();
+    public List<RigheDocumentoConciliazione> RigheDocumentoConciliazione1 { get; set; } = new List<RigheDocumentoConciliazione>();
+    public List<RigheDocumentoConciliazione> RigheDocumentoConciliazione2 { get; set; } = new List<RigheDocumentoConciliazione>();
 }
 
 public class RigheDocumentoConciliazione
@@ -47,5 +48,7 @@ public class RigheDocumentoConciliazione
     public decimal Delta { get; set; }
     public decimal Flag { get; set; }
     public string? numero_doc_abbinamento { get; init; }
-    public string? data_doc_abbinamento { get; init; } 
+    public string? data_doc_abbinamento { get; init; }
+
+    public int Tipo { get; set; }
 }
