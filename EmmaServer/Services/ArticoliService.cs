@@ -17,6 +17,8 @@ public interface IArticoliService
     Task AddOrUpdateArticoliByDocIdAsync(int docId, int idFornitore);
     Task<bool?> DeleteArticoloAsync(EmmaArticoli articolo);
     Task<bool?> UpdateArticoloAsync(EmmaArticoli articolo);
+
+    Task<string?> GetRifArticoloAsync(string rifCodice, int idfornitore);
 }
 
 public class ArticoliService : IArticoliService
@@ -37,6 +39,11 @@ public class ArticoliService : IArticoliService
     public async  Task<EmmaArticoli?> GetArticoloAsync(int id)
     {
         return await _repository.GetIdAsync(id);
+    }
+
+    public async Task<string?> GetRifArticoloAsync(string rifCodice, int idfornitore)
+    {
+        return await _repository.GetRifByCodiceAsync(rifCodice, idfornitore);
     }
 
     public async Task<int?> AddArticoloAsync(EmmaArticoli articolo)

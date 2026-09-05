@@ -6,7 +6,7 @@ namespace EmmaClientAv.Services;
 
 public interface IConciliazioneServiceClient
 {
-    Task<List<ConciliazioneResponse>> GetConciliazione(List<RigaConciliazione> bolle, List<RigaConciliazione> fatture);
+    Task<List<ConciliazioneResponse>> GetConciliazione(string tipo,List<RigaConciliazione> bolle, List<RigaConciliazione> fatture);
 
     Task SalvaConciliazione(List<RigaConciliazione> bolle, List<RigaConciliazione> fatture);
 
@@ -66,7 +66,7 @@ public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServi
     /// Esegue una conciliazione per ogni fornitore presente in bolle o fatture,
     /// saltando i fornitori senza righe da confrontare.
     /// </summary>
-    public async Task<List<ConciliazioneResponse>> GetConciliazione(
+    public async Task<List<ConciliazioneResponse>> GetConciliazione(string tipo,
         List<RigaConciliazione> bolle,
         List<RigaConciliazione> fatture)
     {
@@ -90,6 +90,7 @@ public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServi
 
             var inputConciliazione = new InputConciliazione
             {
+                TipoConciliazione = tipo,
                 Fornitore = fornitore,
                 Bolle = bolleInput,
                 Fatture = fattureInput,

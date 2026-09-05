@@ -23,6 +23,9 @@ public class DettaglioDocumento
 /// <summary>Classe contenitore per l'input unico</summary>
 public class InputConciliazione
 {
+    [JsonPropertyName("tipoConciliazione")]
+    public string TipoConciliazione { get; set; } = string.Empty;
+
     [JsonPropertyName("fornitore")]
     public string Fornitore { get; set; } = string.Empty;
 

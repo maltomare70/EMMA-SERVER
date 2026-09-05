@@ -15,6 +15,7 @@ public interface IFornitoriService
     Task<IEnumerable<EmmaFornitori?>> GetAllTenantAsync();
     Task<int> AddOrUpdateFornitoriByDocIdAsync(int docId);
     Task<bool?> DeleteFornitoreAsync(EmmaFornitori fornitore);
+    Task<EmmaFornitori> GetFornitoreByCodiceAsync(string codice, string tenant);
 }
 
 public class FornitoriService : IFornitoriService
@@ -149,5 +150,9 @@ public class FornitoriService : IFornitoriService
         
         return await _repository.GetAllTenantAsync(tenant);
     }
-    
+
+    public async Task<EmmaFornitori> GetFornitoreByCodiceAsync(string codice, string tenant)
+    {
+        return await _repository.GetFornitoreByCodiceAsync(codice, tenant);
+    }
 }

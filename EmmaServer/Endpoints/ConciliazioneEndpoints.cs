@@ -24,13 +24,33 @@ public static class ConciliazioneEndpoints
         .WithName("GetConciliazioneRigheByTenant");
 
         app.MapPost("/api/v1/conciliazione", async (
-        [FromBody] InputConciliazione inputConciliazione, [FromServices] IConciliazioneService conciliazione, ClaimsPrincipal claims) =>
+        [FromBody] InputConciliazione inputConciliazione, [FromServices] IConciliazioneService conciliazione, 
+        [FromServices] IArticoliService articoliService, [FromServices] IFornitoriService fornitoreService, ClaimsPrincipal claims) =>
         {
             if (claims.Identity == null || !claims.Identity.IsAuthenticated)
                 return Results.BadRequest("Utente non autorizzato");
 
             string? tenant = claims.FindFirstValue("tenant");
             if (string.IsNullOrWhiteSpace(tenant)) return Results.BadRequest("No tenant.");
+
+            if (!string.IsNullOrWhiteSpace(inputConciliazione.TipoConciliazione) && inputConciliazione.TipoConciliazione.Equals("ORDINI-BOLLE"))
+            {
+                string fornitore = inputConciliazione.Fornitore;
+                var forn = await fornitoreService.GetFornitoreByCodiceAsync(fornitore, tenant);
+
+                if (forn is not null)
+                {
+                    foreach (var item in inputConciliazione.Bolle)
+                    {
+                        var rif = await articoliService.GetRifArticoloAsync(item.Codice, forn.id);
+                        if (!string.IsNullOrWhiteSpace(rif))
+                        {
+                            item.Codice = rif;
+                        }
+                    }
+                }
+            }
+            
 
             var result = await conciliazione.GetConciliazioneBolleFattureAsync(inputConciliazione, tenant);
             return Results.Ok(result);
