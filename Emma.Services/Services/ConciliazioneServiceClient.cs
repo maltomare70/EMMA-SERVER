@@ -123,7 +123,7 @@ public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServi
 
     private static List<DettaglioDocumento> ToDettagli(List<RigaConciliazione> righe, string fornitore)
         => righe
-            .Where(r => r.Fornitore == fornitore)
+            .Where(r => r.Fornitore?.ToLower() == fornitore.ToLower())
             .Select(r => new DettaglioDocumento
             {
                 Id = r.IdRiga ?? string.Empty,
