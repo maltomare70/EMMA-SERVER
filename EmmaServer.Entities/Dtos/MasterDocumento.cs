@@ -51,4 +51,5 @@ public class RigheDocumentoConciliazione
     public string? data_doc_abbinamento { get; init; }
 
     public int Tipo { get; set; }
+    public string? Codice { get; set; }
 }

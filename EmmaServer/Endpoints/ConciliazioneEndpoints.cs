@@ -100,5 +100,17 @@ public static class ConciliazioneEndpoints
 
         }).WithName("GetRigheConciliazione");
 
+        app.MapGet("/api/v1/conciliazione/codice/{codice}", async (ClaimsPrincipal claims, [FromRoute] string codice, [FromServices] IConciliaRigheService conciliaRigheService) =>
+        {
+            if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
+
+            string? tenant = claims.FindFirstValue("tenant");
+            if (string.IsNullOrWhiteSpace(tenant)) return Results.BadRequest("Tenant non presente.");
+
+            var righe = await conciliaRigheService.GetRigheConciliazioneByCodiceAsync(codice, tenant);
+
+            return Results.Ok(righe);
+
+        }).WithName("GetRigheConciliazioneByCodice");
     }
 }

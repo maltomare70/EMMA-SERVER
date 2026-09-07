@@ -22,7 +22,7 @@ public interface IDocService
     Task AddOrUpdateFornitorieArticoli(int docId);
     Task InsertRigaDocAsync(ArticoloBolla articoloBolla);
     Task UpdateRigaDocAsync(ArticoloBolla articoloBolla);
-    Task DeleteRigaDocAsync(ArticoloBolla articoloBolla);
+    Task DeleteRigaDocAsync(ArticoloBolla articoloBolla, string tenant);
     Task<bool> UpdateAsync(EmmaDoc doc);
     Task CambiaStatoAsync(CambioStato cambioStato);
     Task CambiaTipoAsync(CambioTipo cambioTipo);
@@ -42,8 +42,9 @@ public class DocService : IDocService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogService _logService;
+    private readonly IConciliaRigheService _conciliaRigheService;
     public DocService(IDocRepository repo, IFornitoriService fornitoriService,
-        IArticoliService articoliService, IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogService logService)
+        IArticoliService articoliService, IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogService logService, IConciliaRigheService conciliaRigheService)
     {
         _repo = repo;
         _fornitoriService = fornitoriService;
@@ -51,6 +52,7 @@ public class DocService : IDocService
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
         _logService = logService;
+        _conciliaRigheService = conciliaRigheService;
     }
 
     public async Task AddOrUpdateFornitorieArticoli(int docId)
@@ -98,9 +100,12 @@ public class DocService : IDocService
         return await _repo.DeleteAsync(doc);
     }
 
-    public async Task DeleteRigaDocAsync(ArticoloBolla articoloBolla)
+    public async Task DeleteRigaDocAsync(ArticoloBolla articoloBolla, string tenant)
     {
         await _repo.DeleteRigaDocAsync(articoloBolla);
+
+        await _conciliaRigheService.DeleteAsync(articoloBolla.Id_Riga, 1, tenant);
+        await _conciliaRigheService.DeleteAsync(articoloBolla.Id_Riga, 2, tenant);
     }
     
     public async Task<List<EmmaDoc?>> GetDocsAsync(EmmaDocFilters emmaDocFilters)

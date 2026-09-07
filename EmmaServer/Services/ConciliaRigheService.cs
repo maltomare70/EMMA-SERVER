@@ -8,8 +8,9 @@ public interface IConciliaRigheService
 {
     Task<int?> AddAsync(EmmaConciliaRighe riga);
     Task<IEnumerable<EmmaConciliaRighe>> GetAllByTenantAsync(string tenant, string tipo);
-    Task DeleteAsync(string id_riga, string tenant);
+    Task DeleteAsync(string id_riga, int tipo_doc, string tenant);
     Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster, string idRiga, string tenant);
+    Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneByCodiceAsync(string codice, string tenant);
     Task SalvaConcilizione(PayloadRiconciliazione payload, string tenant);
 }
 
@@ -36,9 +37,9 @@ public class ConciliaRigheService : IConciliaRigheService
             return items.Where(x => x.tipo_doc == (tipo.Equals("ORDINI-BOLLE", StringComparison.OrdinalIgnoreCase) ? 1 : 2));
         }
     }
-    public async  Task DeleteAsync(string id_riga, string tenant)
+    public async  Task DeleteAsync(string id_riga, int tipo_doc, string tenant)
     {
-        await _repo.DeleteAsync(id_riga, tenant);
+        await _repo.DeleteAsync(id_riga, tipo_doc, tenant);
     }
 
     public async Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster, string idRiga, string tenant)
@@ -46,9 +47,15 @@ public class ConciliaRigheService : IConciliaRigheService
         return await _repo.GetRigheConciliazioneAsync(idMaster, idRiga, tenant);  
     }
 
+    public async Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneByCodiceAsync(string codice, string tenant)
+    {
+        return await _repo.GetRigheConciliazioneByCodiceAsync(codice, tenant);
+    }
+
     public async Task SalvaConcilizione(PayloadRiconciliazione payload, string tenant)
     {
         string tipo = payload.tipo ?? string.Empty;
+        int tipo_doc = tipo.Equals("ORDINI-BOLLE", StringComparison.OrdinalIgnoreCase) ? 1 : 2;
 
         foreach (var b in payload.bolle)
         {
@@ -63,12 +70,12 @@ public class ConciliaRigheService : IConciliaRigheService
                 note = b.Note ?? string.Empty,
                 qta = b.Qta,
                 stato = b.Stato ?? string.Empty,
-                tipo_doc = tipo.Equals("ORDINI-BOLLE", StringComparison.OrdinalIgnoreCase) ? 1 : 2,
+                tipo_doc = tipo_doc,
                 qta_canc = b.Qta_Conc,
                 tenant = tenant
             };
 
-            await DeleteAsync(item.id_riga, tenant);
+            await DeleteAsync(item.id_riga, tipo_doc, tenant);
 
             if (b.Selezionato) await AddAsync(item);
 
@@ -87,12 +94,12 @@ public class ConciliaRigheService : IConciliaRigheService
                 note = b.Note ?? string.Empty,
                 qta = b.Qta,
                 stato = b.Stato ?? string.Empty,
-                tipo_doc = tipo.Equals("ORDINI-BOLLE", StringComparison.OrdinalIgnoreCase) ? 1 : 2,
+                tipo_doc = tipo_doc,
                 qta_canc = b.Qta_Conc,
                 tenant = tenant
             };
 
-            await DeleteAsync(item.id_riga, tenant);
+            await DeleteAsync(item.id_riga, tipo_doc, tenant);
 
             if (b.Selezionato) await AddAsync(item);
         }

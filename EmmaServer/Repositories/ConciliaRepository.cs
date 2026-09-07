@@ -6,9 +6,10 @@ namespace EmmaServer.Repositories;
 public interface IConciliaRigheRepository : IRepositoryGenerico<EmmaConciliaRighe>
 {
     Task<IEnumerable<EmmaConciliaRighe>> GetAllByTenantAsync(string tenant);
-    Task DeleteAsync(string id_riga, string tenant);
+    Task DeleteAsync(string id_riga, int tipo_doc, string tenant);
 
     Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster, string idRiga, string tenant);
+    Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneByCodiceAsync(string codice, string tenant);
 }
 
 public class ConciliaRigheRepository : RepositoryGenerico<EmmaConciliaRighe>, IConciliaRigheRepository
@@ -30,16 +31,16 @@ public class ConciliaRigheRepository : RepositoryGenerico<EmmaConciliaRighe>, IC
         return await db.QueryAsync<EmmaConciliaRighe>(sql, new { Tenant = tenant });
     }
 
-    public async Task DeleteAsync(string id_riga, string tenant)
+    public async Task DeleteAsync(string id_riga, int tipo_doc, string tenant)
     {
         // Query SQL specifica per questa ricerca (Postgres usa il minuscolo di default)
-        const string sql = "DELETE FROM conciliarighe WHERE tenant = @Tenant AND id_riga = @Id_riga;";
+        const string sql = "DELETE FROM conciliarighe WHERE tenant = @Tenant AND id_riga = @Id_riga AND tipo_doc = @Tipo_doc;";
 
         // Sfruttiamo il metodo del padre per ottenere la connessione al database del tenant corrente
         using var db = await CreaConnessione();
 
         // Eseguiamo una normale query Dapper (non Contrib)
-        await db.QueryAsync(sql, new { Tenant = tenant, Id_riga = id_riga });
+        await db.QueryAsync(sql, new { Tenant = tenant, Id_riga = id_riga, Tipo_doc = tipo_doc});
     }
 
     public async Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster, string idRiga, string tenant)
@@ -111,5 +112,53 @@ public class ConciliaRigheRepository : RepositoryGenerico<EmmaConciliaRighe>, IC
         if (string.IsNullOrWhiteSpace(id)) return null;
         var docs = await _docRepository.GetDocsAsync(new EmmaDocFilters() { Id = id });
         return docs?.FirstOrDefault();
+    }
+
+
+    public async Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneByCodiceAsync(string codice, string tenant)
+    {
+        List<EmmaConciliaRighe> items;
+ 
+        // Query SQL specifica per questa ricerca (Postgres usa il minuscolo di default)
+        const string sql = "SELECT * FROM conciliarighe WHERE tenant = @Tenant AND codice = @Codice ;";
+        // Sfruttiamo il metodo del padre per ottenere la connessione al database del tenant corrente
+        using var db = await CreaConnessione();
+        // Eseguiamo una normale query Dapper (non Contrib)
+        var result = await db.QueryAsync<EmmaConciliaRighe>(sql, new { Tenant = tenant, codice = codice });
+        items = result.ToList();
+
+
+        List<EmmaConciliaRigheDto> docs = new List<EmmaConciliaRigheDto>();
+        //Per recuperare i dati del documento associato a ciascuna riga di conciliazione
+        foreach (var item in items)
+        {
+            //recupero codice di abbinamento
+            var doc = await GetDocByCodiceAbbinamentoIdMasterAsync(item.id_master, tenant, codice);
+            var docEntity = doc?.ToDoc();
+
+            EmmaConciliaRigheDto itemDto = new EmmaConciliaRigheDto
+            {
+                id = item.id,
+                id_master = item.id_master,
+                id_riga = item.id_riga,
+                tenant = item.tenant,
+                data_creazione = item.data_creazione,
+                codice = item.codice,
+                stato = item.stato,
+                note = item.note,
+                id_fornitore = item.id_fornitore,
+                tipo_doc = item.tipo_doc,
+                qta = item.qta,
+                qta_canc = item.qta_canc,
+                delta = item.delta,
+                flag = item.flag,
+                numero_doc_abbinamento = docEntity?.NumeroBolla ?? string.Empty,
+                data_doc_abbinamento = docEntity?.DataBolla ?? string.Empty
+            };
+
+            docs.Add(itemDto);
+        }
+
+        return docs;
     }
 }

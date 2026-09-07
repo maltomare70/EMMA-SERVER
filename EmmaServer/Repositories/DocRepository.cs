@@ -25,7 +25,6 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
     public DocRepository(IUserConnectionProvider connectionProvider) : base(connectionProvider)
     {
         _connectionProvider =  connectionProvider;
-        ;
     }
 
     public async Task DeleteRigaDocAsync(ArticoloBolla articoloBolla)
@@ -51,11 +50,13 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
         var ddtResponse = emmaDoc?.content?.Deserialize<DdtResponse>();
         var doc = ddtResponse?.Document;
         var riga = doc?.Articoli.FirstOrDefault((x => x.Id_Riga.ToLower() == articoloBolla.Id_Riga.ToLower()));
-        if (riga is not null) doc?.Articoli.Remove(riga);
+        if (riga is not null)
+        {
+            doc?.Articoli.Remove(riga);
+        }
 
         using JsonDocument ddtResponseModificato = ConvertObjectToJsonDocument(ddtResponse);
         emmaDoc?.content = ddtResponseModificato;
-
         if (emmaDoc is not null) await UpdateAsync(emmaDoc);
     }
     

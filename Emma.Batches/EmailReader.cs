@@ -106,6 +106,12 @@ public class EmailReader : IEmailReader
                         var message = inbox.GetMessage(uid);
                         if (await ProcessMessage(message, emma_url, tenants))
                         {
+                            Console.WriteLine($"Message: {message.MessageId} processed with succesfull.");
+                            inbox.AddFlags(uid, MessageFlags.Seen, true);
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Message: {message.MessageId} not processed.");
                             inbox.AddFlags(uid, MessageFlags.Seen, true);
                         }
                     }

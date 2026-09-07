@@ -61,8 +61,11 @@ public static class DocEndpoints
             [FromBody] ArticoloBolla articoloBolla, [FromServices] IDocService docService, ClaimsPrincipal claims) =>
         {
             if (claims.Identity == null || !claims.Identity.IsAuthenticated) return Results.BadRequest("Utente non autorizzato");
-            
-            await docService.DeleteRigaDocAsync(articoloBolla);
+
+            string? tenant = claims.FindFirstValue("tenant");
+            if (string.IsNullOrWhiteSpace(tenant)) return Results.BadRequest("No tenant.");
+
+            await docService.DeleteRigaDocAsync(articoloBolla, tenant);
             return Results.Ok();
         } ).WithName("CancellazioneRigaDoc");
         

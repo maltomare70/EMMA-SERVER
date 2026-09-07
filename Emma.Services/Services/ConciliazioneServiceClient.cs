@@ -13,6 +13,7 @@ public interface IConciliazioneServiceClient
     Task<List<EmmaConciliaRighe>> GetAllAsync(string tipo);
 
     Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster);
+    Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneByCodiceAsync(string codice);
     Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneAsync(string idMaster, string idRiga);
 }
 
@@ -22,6 +23,7 @@ public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServi
     private const string EndpointSalva = "/api/v1/salva-conciliazione";
     private const string EndpointMasterRiga = Endpoint + "/master/{0}/riga/{1}";
     private const string EndpointMaster = Endpoint + "/master/{0}";
+    private const string EndpointCodice = Endpoint + "/codice/{0}";
 
     public ConciliazioneServiceClient(string url, string user, string password, string tenant = "")
         : base(url, user, password, tenant)
@@ -59,6 +61,15 @@ public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServi
         var path = string.Format(
             EndpointMaster,
             Uri.EscapeDataString(idMaster ?? string.Empty));
+
+        return await TryGetAsync<List<EmmaConciliaRigheDto>>(path).ConfigureAwait(false)
+               ?? new List<EmmaConciliaRigheDto>();
+    }
+    public async Task<List<EmmaConciliaRigheDto>> GetRigheConciliazioneByCodiceAsync(string codice)
+    {
+        var path = string.Format(
+            EndpointCodice,
+            Uri.EscapeDataString(codice ?? string.Empty));
 
         return await TryGetAsync<List<EmmaConciliaRigheDto>>(path).ConfigureAwait(false)
                ?? new List<EmmaConciliaRigheDto>();

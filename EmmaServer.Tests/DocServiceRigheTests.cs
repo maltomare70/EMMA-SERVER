@@ -115,7 +115,7 @@ public class DocServiceRigheTests
         {
             Id_Master = ddt.Document.Id,
             Id_Riga = "2"
-        });
+        }, _fixture.Tenant);
 
         var bolla = await RileggiBollaAsync(filtri);
         var riga = Assert.Single(bolla.Articoli);
