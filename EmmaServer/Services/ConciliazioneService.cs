@@ -169,7 +169,7 @@ public class ConciliazioneService : IConciliazioneService
                     token_output = results!.Costs.OutputTokens,
                     token_tot = results!.Costs.TotalTokens,
                     cost = results!.Costs.TotalCostEur,
-                    message = $"{inputConciliazione.Fornitore}",
+                    message = $"{inputConciliazione.Fornitore} - {inputConciliazione.TipoConciliazione}",
                     duration = secondiInteri
                 });
 
