@@ -8,6 +8,7 @@ using EmmaServer.Repositories;
 using EmmaServer.Services;
 using Microsoft.AspNetCore.Authentication;
 using Npgsql;
+using System.Net;
 using Scalar.AspNetCore;
 using System.Data;
 using System.Security.Claims;
@@ -49,6 +50,13 @@ builder.Services.AddScoped<IConciliazioneService, ConciliazioneService>();
 builder.Services.AddScoped<IConciliaRigheService, ConciliaRigheService>();
 builder.Services.AddScoped<IConciliaRigheRepository, ConciliaRigheRepository>();
 
+// --- Database vettoriale (PDF -> chunk -> embedding -> pgvector) ---
+// Il tokenizer carica il vocabolario cl100k_base una volta sola: singleton.
+builder.Services.AddSingleton<ITokenChunker, TokenChunker>();
+builder.Services.AddScoped<IEmbeddingClient, GeminiEmbeddingClient>();
+builder.Services.AddScoped<IRagRepository, RagRepository>();
+builder.Services.AddScoped<IRagService, RagService>();
+
 EmailReaderOptions emailReaderOptions = new EmailReaderOptions()
 {
     AdminPassword = builder.Configuration["Admin:Password"],
@@ -88,6 +96,35 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
+
+// Client verso le API di embedding di Google. I timeout di default del resilience
+// handler (10s per tentativo) sono troppo stretti: un batch da 100 chunk puo' superarli.
+builder.Services.AddHttpClient("GeminiService", client =>
+    {
+        client.Timeout = TimeSpan.FromMinutes(5);
+    })
+    .AddStandardResilienceHandler(options =>
+    {
+        options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(60);
+        options.TotalRequestTimeout.Timeout = TimeSpan.FromMinutes(4);
+        // Vincolo della libreria: la finestra del circuit breaker deve valere
+        // almeno il doppio del timeout di tentativo.
+        options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(180);
+
+        options.Retry.MaxRetryAttempts = 4;
+        options.Retry.Delay = TimeSpan.FromSeconds(2);
+        options.Retry.BackoffType = Polly.DelayBackoffType.Exponential;
+        options.Retry.UseJitter = true;
+
+        // I 429 NON si ritentano qui: il limite di Gemini si conosce solo leggendo il
+        // corpo della risposta ("riprova fra 46s"), e un backoff a caso resterebbe
+        // dentro la stessa finestra bloccata. Se ne occupa GeminiEmbeddingClient.
+        options.Retry.ShouldHandle = args => ValueTask.FromResult(
+            args.Outcome.Exception is HttpRequestException ||
+            (args.Outcome.Result is { } risposta &&
+             (risposta.StatusCode == HttpStatusCode.RequestTimeout ||
+              (int)risposta.StatusCode >= 500)));
+    });
 
 builder.Services.AddHttpClient("RenderService")
     .AddStandardResilienceHandler(options =>

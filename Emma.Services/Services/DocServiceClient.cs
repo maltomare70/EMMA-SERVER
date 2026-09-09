@@ -193,6 +193,7 @@ public class DocServiceClient : ServiceClientBase, IDocServiceClient
         throw new HttpRequestException($"Errore durante l'invio: {(int)response.StatusCode} {response.ReasonPhrase} - {body}");
     }
 
+
     /// <summary>Best effort: l'esito della pulizia viene ignorato.</summary>
     public async Task CleanDocs()
         => await TrySendAsync(HttpMethod.Delete, EndpointClean).ConfigureAwait(false);
