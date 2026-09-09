@@ -59,8 +59,33 @@ public class EmmaRepository: IEmmaRepository
 
         //await CreateTableFromClassAsync<EmmaConciliaMaster>();
         await CreateTableFromClassAsync<EmmaConciliaRighe>();
+
+        await ExecuteSqlMigratione("Migrations/sql_001.sql");
+        await ExecuteSqlMigratione("Migrations/sql_002.sql");
     }
     
+    private async Task ExecuteSqlMigratione(string filePath)
+    {
+        // Risolvi percorso rispetto alla directory di esecuzione dell'app (output/publish)
+        var relativePath = filePath.Replace('/', Path.DirectorySeparatorChar);
+        var path = Path.Combine(AppContext.BaseDirectory, relativePath);
+
+        // Se non esiste nella directory di base dell'app, prova la working directory corrente
+        if (!File.Exists(path))
+        {       
+            var fallback = Path.Combine(Directory.GetCurrentDirectory(), relativePath);
+            if (File.Exists(fallback))
+                path = fallback;
+            else
+                throw new FileNotFoundException($"Migration file not found: {filePath}");
+        }
+
+        var sql = await File.ReadAllTextAsync(path);
+        using var db = await CreaConnessione();
+        await db.ExecuteAsync(sql);
+    }
+   
+
 
     private async Task<IDbConnection> CreaConnessionePostreSQL()
     {
