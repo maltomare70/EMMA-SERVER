@@ -1,8 +1,5 @@
-﻿
-using Emma.Services.Services;
-using EmmaClientAv.Services;
+﻿using Emma.Services.Services;
 using EmmaServer.Entities;
-using EmmaServer.Entities.Dtos;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;
@@ -11,32 +8,30 @@ using MimeKit;
 
 namespace Emma.Batches;
 
-public class EmailReaderOptions
+public class EmailReaderDocOptions
 {
     public string? ServerUrl { get; set; }
     public string? ImapServerUrl { get; set; }
     public int ImapServerPort { get; set; }
     public string? ImapUser { get; set; }
     public string? ImapPassword { get; set; }
-    public string? AdminPassword { get; set; } 
+    public string? AdminPassword { get; set; }
 }
 
-
-
-public interface IEmailReader
+public interface IEmailReaderDoc
 {
     Task ExecuteAsync();
 
 }
 
-public class EmailReader : IEmailReader
+public class EmailReaderDoc : IEmailReaderDoc
 {
-    private readonly EmailReaderOptions? _emailReaderOptions;
+    private readonly EmailReaderDocOptions? _emailReaderDocOptions;
 
     private static bool WIP;
-    public EmailReader (EmailReaderOptions emailReaderOptions )
+    public EmailReaderDoc(EmailReaderDocOptions emailReaderDocOptions)
     {
-        _emailReaderOptions = emailReaderOptions;
+        _emailReaderDocOptions = emailReaderDocOptions;
     }
 
 
@@ -47,30 +42,30 @@ public class EmailReader : IEmailReader
         {
             Console.WriteLine("Elaborazione ancora in corso");
             return;
-        }    
-       
+        }
+
         using (var client = new ImapClient())
         {
             try
             {
-                string? emma_url = _emailReaderOptions?.ServerUrl;
+                string? emma_url = _emailReaderDocOptions?.ServerUrl;
 
                 // Configurazione dei dati di accesso
-                string? imapServer = _emailReaderOptions?.ImapServerUrl;
+                string? imapServer = _emailReaderDocOptions?.ImapServerUrl;
                 if (string.IsNullOrWhiteSpace(imapServer))
                 {
                     Console.WriteLine("Errore: ImapServerUrl non configurato.");
                     return;
                 }
 
-                int port = _emailReaderOptions?.ImapServerPort ?? 993; // Porta standard per IMAP su SSL
-                string? email = _emailReaderOptions?.ImapUser;
+                int port = _emailReaderDocOptions?.ImapServerPort ?? 993; // Porta standard per IMAP su SSL
+                string? email = _emailReaderDocOptions?.ImapUser;
                 if (string.IsNullOrWhiteSpace(email))
                 {
                     Console.WriteLine("Errore: ImapUser non configurato.");
                     return;
                 }
-                string? password = _emailReaderOptions?.ImapPassword; // NON la password normale
+                string? password = _emailReaderDocOptions?.ImapPassword; // NON la password normale
                 if (string.IsNullOrWhiteSpace(password))
                 {
                     Console.WriteLine("Errore: ImapPassword non configurato.");
@@ -82,7 +77,7 @@ public class EmailReader : IEmailReader
                     //Inizio Elabprazione
                     WIP = true;
 
-                    TenantServiceClient tenantServiceClient = new TenantServiceClient(emma_url, EmmaAdmin.ADMIN, _emailReaderOptions?.AdminPassword!);
+                    TenantServiceClient tenantServiceClient = new TenantServiceClient(emma_url, EmmaAdmin.ADMIN, _emailReaderDocOptions?.AdminPassword!);
                     var tenants = await tenantServiceClient.GetsAsync();
 
                     client.Connect(imapServer, port, true);
@@ -133,12 +128,12 @@ public class EmailReader : IEmailReader
     }
 
     private async Task<bool> ProcessMessage(MimeMessage message, string emma_url, List<EmmaTenant> tenants)
-    {        
+    {
         Console.WriteLine($"Data: {message.Date.UtcDateTime}");
         Console.WriteLine($"Da: {message.From}");
         Console.WriteLine($"Oggetto: {message.Subject}");
 
-       
+
         //queste info le otteniamo dal message.From che devono essere collegate
         //in maniera univoca al tenant
         EmmaTenant? tenant = null;
@@ -151,11 +146,11 @@ public class EmailReader : IEmailReader
         }
 
         if (tenant is null) return false;
-        
+
 
         // Se vuoi leggere il testo del corpo del messaggio:
         // Console.WriteLine($"Testo: {message.TextBody}");
-        IDocServiceClient docService = new DocServiceClient(emma_url, EmmaAdmin.ADMIN, _emailReaderOptions!.AdminPassword!, tenant.codice);
+        IRagServiceClient ragService = new RagServiceClient(emma_url, EmmaAdmin.ADMIN, _emailReaderDocOptions!.AdminPassword!, tenant.codice);
 
         foreach (var attachment in message.Attachments)
         {
@@ -170,105 +165,12 @@ public class EmailReader : IEmailReader
 
                     Console.WriteLine($"Allegato '{mimePart.FileName}' caricato in memoria come Stream. Dimensione: {memoryStream.Length} byte");
 
-                    DatiBolla? datiBolla = await docService.InviaFileAsync(memoryStream, fileName);
-                    
+                    var response = await ragService.IndicizzaPdfAsync(memoryStream, fileName);                    
                 }
             }
 
         }
 
         return true;
-    }
-
-
-    public async Task ExecuteDocAsync()
-    {
-        if (WIP)
-        {
-            Console.WriteLine("Elaborazione ancora in corso");
-            return;
-        }
-
-        using (var client = new ImapClient())
-        {
-            try
-            {
-                string? emma_url = _emailReaderOptions?.ServerUrl;
-
-                // Configurazione dei dati di accesso
-                string? imapServer = _emailReaderOptions?.ImapServerUrl;
-                if (string.IsNullOrWhiteSpace(imapServer))
-                {
-                    Console.WriteLine("Errore: ImapServerUrl non configurato.");
-                    return;
-                }
-
-                int port = _emailReaderOptions?.ImapServerPort ?? 993; // Porta standard per IMAP su SSL
-                string? email = _emailReaderOptions?.ImapUser;
-                if (string.IsNullOrWhiteSpace(email))
-                {
-                    Console.WriteLine("Errore: ImapUser non configurato.");
-                    return;
-                }
-                string? password = _emailReaderOptions?.ImapPassword; // NON la password normale
-                if (string.IsNullOrWhiteSpace(password))
-                {
-                    Console.WriteLine("Errore: ImapPassword non configurato.");
-                    return;
-                }
-
-                if (!string.IsNullOrWhiteSpace(emma_url))
-                {
-                    //Inizio Elabprazione
-                    WIP = true;
-
-                    TenantServiceClient tenantServiceClient = new TenantServiceClient(emma_url, EmmaAdmin.ADMIN, _emailReaderOptions?.AdminPassword!);
-                    var tenants = await tenantServiceClient.GetsAsync();
-
-                    client.Connect(imapServer, port, true);
-                    client.Authenticate(email, password);
-
-                    // 3. Apertura della cartella principale (In arrivo / Inbox)
-                    // Usiamo FolderAccess.ReadOnly se dobbiamo solo leggere, evita blocchi
-                    var inbox = client.Inbox;
-                    inbox.Open(FolderAccess.ReadWrite);
-
-                    var uids = inbox.Search(SearchQuery.NotSeen);
-
-                    // Console.WriteLine($"Totale messaggi in Inbox: {inbox.Count}");
-
-                    // 4. Cerchiamo gli ultimi 10 messaggi (o usiamo un filtro di ricerca)
-                    // In questo esempio prendiamo gli ul                                                                                                                                                                                                                                                                                                                                                                                           timi 10 partendo dalla fine
-                    //int startIndex = Math.Max(0, inbox.Count - 10);
-
-                    //for (int i = inbox.Count - 1; i >= startIndex; i--)
-                    foreach (var uid in uids)
-                    {
-                        var message = inbox.GetMessage(uid);
-                        if (await ProcessMessage(message, emma_url, tenants))
-                        {
-                            Console.WriteLine($"Message: {message.MessageId} processed with succesfull.");
-                            inbox.AddFlags(uid, MessageFlags.Seen, true);
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Message: {message.MessageId} not processed.");
-                            inbox.AddFlags(uid, MessageFlags.Seen, true);
-                        }
-                    }
-
-                    client.Disconnect(true);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Errore durante la lettura della posta: {ex.Message}");
-            }
-            finally
-            {
-                //Fine Elabprazione
-                WIP = false;
-            }
-        }
     }
 }

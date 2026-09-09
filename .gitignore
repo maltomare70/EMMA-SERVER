@@ -10,3 +10,4 @@ Emma.Batches/bin
 Emma.Services/bin
 EmmaServer.Tests/obj
 EmmaServer.Tests/bin
+EmmaServer/appsettings.Development.json

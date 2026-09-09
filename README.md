@@ -197,3 +197,6 @@ reindicizzazione.
   cresce di circa un minuto ogni 100 chunk: oltre il migliaio di chunk conviene
   passare alla fatturazione su Google oppure spostare l'indicizzazione in un
   BackgroundService con polling dello stato.
+
+### Per configurare la password del servizio IMAP di Google per l'utente
+https://myaccount.google.com/security

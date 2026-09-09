@@ -71,6 +71,18 @@ builder.Services.AddSingleton<IEmailReader>(sp => new EmailReader(emailReaderOpt
 
 builder.Services.AddSingleton<ICleanDocs>(sp => new CleanDocs(emailReaderOptions));
 
+EmailReaderDocOptions emailReaderDocOptions = new EmailReaderDocOptions()
+{
+    AdminPassword = builder.Configuration["Admin:Password"],
+    ServerUrl = builder.Configuration["ImportBatch:Server"],
+    ImapServerUrl = builder.Configuration["ImportBatch:ImapServer"],
+    ImapServerPort = 993,
+    ImapUser = builder.Configuration["ImportBatch:ImapUser"],
+    ImapPassword = builder.Configuration["ImportBatch:ImapPassword"],
+
+};
+builder.Services.AddSingleton<IEmailReaderDoc>(sp => new EmailReaderDoc(emailReaderDocOptions));
+
 // 1. Registra la connessione al DB (o il tuo IUserConnectionProvider dinamico)
 builder.Services.AddScoped<IDbConnection>(sp => new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
 
