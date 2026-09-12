@@ -39,7 +39,8 @@ public class UserService : IUserService
         {
             email = user.email.ToLowerInvariant(),
             pwd = PasswordHelper.GeneraHash(user.pwd ?? string.Empty),
-            tenant = user.tenant
+            tenant = user.tenant,
+            codice = user.codice,
         };
 
         return await _repoUser.AddAsync(emmaUser);
