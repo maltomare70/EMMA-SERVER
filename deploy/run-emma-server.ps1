@@ -29,10 +29,18 @@
     Nome del container. Default: emma-server
 
 .PARAMETER Port
-    Porta sull'host da mappare sulla 8080 del container. Default: 8080
+    Porta sull'host da mappare sulla 8080 del container. Default: 9111
+    (la porta interna resta sempre la 8080, definita da ASPNETCORE_URLS).
 
 .PARAMETER RestartPolicy
     Politica di riavvio Docker. Default: unless-stopped
+
+.PARAMETER Network
+    Rete Docker a cui agganciare il container. Viene creata se non esiste.
+    Su una rete definita dall'utente Docker fa da DNS, quindi gli altri
+    container (es. emma-web) raggiungono questo con http://<nome>:8080
+    usando la porta INTERNA, non quella pubblicata con -Port.
+    Default: emma-net. Passare stringa vuota per non usare nessuna rete.
 
 .PARAMETER Volume
     Bind mount aggiuntivi, formato "percorso-host:percorso-container".
@@ -58,7 +66,7 @@
 
 .EXAMPLE
     .\install-emma-server.ps1
-    Avvia il container leggendo emma-server.env.
+    Avvia il container leggendo emma-server.env: http://localhost:9111
 
 .EXAMPLE
     .\install-emma-server.ps1 -ConfigFile .\produzione.env -Port 9090 -Force
@@ -72,9 +80,10 @@ param(
     [switch]   $GenerateConfig,
     [string]   $Image         = 'almalabs/emma-server:latest',
     [string]   $ContainerName = 'emma-server',
-    [int]      $Port          = 8080,
+    [int]      $Port          = 9111,
     [ValidateSet('no', 'always', 'on-failure', 'unless-stopped')]
     [string]   $RestartPolicy = 'unless-stopped',
+    [string]   $Network       = 'emma-net',
     [string[]] $Volume        = @(),
     [switch]   $NoPull,
     [switch]   $Force,
@@ -149,6 +158,8 @@ $TemplateConfig = @'
 # =============================================================================
 
 # --- Runtime ASP.NET ---------------------------------------------------------
+# ASPNETCORE_URLS e' la porta INTERNA al container: lasciarla sulla 8080.
+# La porta esposta sull'host si cambia con -Port (default 9111).
 ASPNETCORE_ENVIRONMENT=Production
 ASPNETCORE_URLS=http://+:8080
 
@@ -359,6 +370,34 @@ if (-not [string]::IsNullOrWhiteSpace($esistente)) {
 }
 
 # ---------------------------------------------------------------------------
+# Rete Docker
+# ---------------------------------------------------------------------------
+# Sulla bridge di default Docker non risolve i nomi dei container: serve una
+# rete definita dall'utente perche' emma-web possa chiamare http://emma-server:8080
+
+if (-not [string]::IsNullOrWhiteSpace($Network)) {
+    Write-Step "Rete Docker '$Network'"
+
+    $reteEsistente = Invoke-Docker @('network', 'ls', '--filter', "name=^$Network$", '--format', '{{.Name}}')
+
+    if ([string]::IsNullOrWhiteSpace($reteEsistente)) {
+        if ($DryRun) {
+            Write-Host "    docker network create $Network" -ForegroundColor DarkGray
+        } else {
+            $null = Invoke-Docker @('network', 'create', $Network)
+            if ($script:UltimoExitCode -ne 0) {
+                Stop-ConErrore "Creazione della rete '$Network' fallita."
+            }
+            Write-Ok "Rete creata"
+        }
+    } else {
+        Write-Ok "Rete gia' presente"
+    }
+} else {
+    Write-Step "Nessuna rete specificata (bridge di default)"
+}
+
+# ---------------------------------------------------------------------------
 # File env temporaneo
 # ---------------------------------------------------------------------------
 # Le variabili vengono passate con --env-file invece che con tanti -e: cosi'
@@ -386,6 +425,10 @@ try {
         '--env-file', $fileEnvTemporaneo
     )
 
+    if (-not [string]::IsNullOrWhiteSpace($Network)) {
+        $argomenti += @('--network', $Network)
+    }
+
     foreach ($montaggio in $Volume) {
         if (-not [string]::IsNullOrWhiteSpace($montaggio)) {
             $argomenti += @('-v', $montaggio)
@@ -400,6 +443,9 @@ try {
         Write-Host "      --name $ContainerName \" -ForegroundColor DarkGray
         Write-Host "      --restart $RestartPolicy \" -ForegroundColor DarkGray
         Write-Host "      -p $($Port):8080 \" -ForegroundColor DarkGray
+        if (-not [string]::IsNullOrWhiteSpace($Network)) {
+            Write-Host "      --network $Network \" -ForegroundColor DarkGray
+        }
         foreach ($chiave in $variabili.Keys) {
             $mostrato = if ($chiave -match 'Password|ApiKey|Key$|Secret') { '***' } else { $variabili[$chiave] }
             Write-Host "      -e `"$chiave=$mostrato`" \" -ForegroundColor DarkGray
@@ -436,7 +482,11 @@ try {
 
     Write-Ok "Stato: running"
     Write-Host ""
-    Write-Host "  EMMA-SERVER e' raggiungibile su http://localhost:$Port" -ForegroundColor Green
+    Write-Host "  Dall'host       : http://localhost:$Port" -ForegroundColor Green
+    if (-not [string]::IsNullOrWhiteSpace($Network)) {
+        Write-Host "  Da altri container sulla rete '$Network' : http://$($ContainerName):8080" -ForegroundColor Green
+        Write-Host "  (dentro Docker vale la porta interna 8080, non la $Port)" -ForegroundColor DarkGray
+    }
     Write-Host ""
     Write-Host "  Log        : docker logs -f $ContainerName"
     Write-Host "  Stop       : docker stop $ContainerName"
