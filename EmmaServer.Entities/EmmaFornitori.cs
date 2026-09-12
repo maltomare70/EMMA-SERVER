@@ -1,11 +1,12 @@
+using Dapper.Contrib.Extensions;
 using System;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
-using Dapper.Contrib.Extensions;
 
 namespace EmmaServer.Entities;
 
-[Table("fornitori")] 
+[Dapper.Contrib.Extensions.Table("fornitori")] 
 public class EmmaFornitori : INotifyPropertyChanged, IEntity
 {
     // Flag per capire se il record è stato modificato dall'utente
@@ -21,13 +22,16 @@ public class EmmaFornitori : INotifyPropertyChanged, IEntity
     }
 
     private string _descrizione = string.Empty;
+    [Column(TypeName = "varchar(256)")]
     public string descrizione 
     { 
         get => _descrizione; 
         set => SetProperty(ref _descrizione, value); 
     }
 
+   
     private string _riferimento = string.Empty;
+    [Column(TypeName = "varchar(256)")]
     public string riferimento 
     { 
         get => _riferimento; 
@@ -35,6 +39,7 @@ public class EmmaFornitori : INotifyPropertyChanged, IEntity
     }
 
     private string _tenant = string.Empty;
+    [Column(TypeName = "varchar(100)")]
     public string tenant 
     { 
         get => _tenant; 

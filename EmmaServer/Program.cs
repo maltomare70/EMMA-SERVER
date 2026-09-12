@@ -194,9 +194,10 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.MapPost("/api/v1/auth", (ClaimsPrincipal claims) =>
     {
-        if (claims.Identity == null || !claims.Identity.IsAuthenticated) return  Results.Ok(new LoginResponse(false, ""));
+        if (claims.Identity == null || !claims.Identity.IsAuthenticated) return  Results.Ok(new LoginResponse(false, "", ""));
 
-        return Results.Ok(new LoginResponse(true, ""));
+        var customerCode = claims.FindFirstValue("customer_code");
+        return Results.Ok(new LoginResponse(true, string.Empty, customerCode ?? string.Empty  ));
     })
     .WithName("Auth");
 

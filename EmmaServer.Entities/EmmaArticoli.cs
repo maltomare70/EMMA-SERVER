@@ -1,11 +1,12 @@
+using Dapper.Contrib.Extensions;
 using System;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
-using Dapper.Contrib.Extensions;
 
 namespace EmmaServer.Entities;
 
-[Table("articoli")] 
+[Dapper.Contrib.Extensions.Table("articoli")] 
 public record EmmaArticoli: INotifyPropertyChanged, IEntity
 {
     // Flag per capire se il record è stato modificato dall'utente
@@ -21,6 +22,7 @@ public record EmmaArticoli: INotifyPropertyChanged, IEntity
     }
     
     private string _codice = string.Empty;
+    [Column(TypeName = "varchar(256)")]
     public string codice
     { 
         get => _codice; 
@@ -29,6 +31,7 @@ public record EmmaArticoli: INotifyPropertyChanged, IEntity
 
     
     private string _descrizione = string.Empty;
+    [Column(TypeName = "varchar(256)")]
     public string descrizione 
     { 
         get => _descrizione; 
@@ -47,6 +50,7 @@ public record EmmaArticoli: INotifyPropertyChanged, IEntity
     
     
     private string _rifdescrizione = string.Empty;
+    [Column(TypeName = "varchar(256)")]
     public string rifdescrizione 
     { 
         get => _rifdescrizione; 
@@ -67,10 +71,11 @@ public record EmmaArticoli: INotifyPropertyChanged, IEntity
         set => SetProperty(ref _scoredescrizione, value); 
     }
 
-    
+    [Column(TypeName = "varchar(100)")]
     public string tenant { get; set; } = string.Empty;
     
     private int _idfornitore= 0;
+    [Column(TypeName = "varchar(100)")]
     public int idfornitore 
     { 
         get => _idfornitore; 

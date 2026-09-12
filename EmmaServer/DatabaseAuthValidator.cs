@@ -8,7 +8,7 @@ using EmmaServer.Helpers;
 
 namespace EmmaServer;
 
-public record AuthValidationResult(bool IsValid, string? DatabaseName, string? Tenant);
+public record AuthValidationResult(bool IsValid, string? DatabaseName, string? Tenant, string? UserCode);
 
 public class DatabaseAuthValidator: IBasicAuthValidator
 {
@@ -32,14 +32,14 @@ public class DatabaseAuthValidator: IBasicAuthValidator
             const string sql = "SELECT * FROM users WHERE email = @email;";
             var user = await db.QueryFirstAsync<EmmaUser>(sql, new { email = email.ToLowerInvariant() });
             
-            if ( user is null || string.IsNullOrWhiteSpace(user.pwd)) return new AuthValidationResult(false, null, null);
+            if ( user is null || string.IsNullOrWhiteSpace(user.pwd)) return new AuthValidationResult(false, null, null, null);
 
         if (PasswordHelper.VerificaPassword(password, user.pwd!))
             {
-                if (string.IsNullOrWhiteSpace(user.tenant))  return new AuthValidationResult(false, null, null);
+                if (string.IsNullOrWhiteSpace(user.tenant))  return new AuthValidationResult(false, null, null, null);
                 // Restituiamo successo e il nome del database associato!
-                return new AuthValidationResult(true, UserConnectionProvider.DATABASE_NAME, user.tenant);
+                return new AuthValidationResult(true, UserConnectionProvider.DATABASE_NAME, user.tenant, user.codice);
             }
-            return new AuthValidationResult(false, null, null);
+            return new AuthValidationResult(false, null, null, null);
     }
 }

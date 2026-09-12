@@ -63,7 +63,8 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
                 var claims = new[] {
                     new Claim(ClaimTypes.Name, username),
                     new Claim("database_name", "emma"),
-                    new Claim("tenant", tenant_code)
+                    new Claim("tenant", tenant_code),
+                    new Claim("customer_code", "admin")
                 };
 
                 var identity = new ClaimsIdentity(claims, Scheme.Name);
@@ -88,7 +89,8 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
                 var claims = new[] {
                     new Claim(ClaimTypes.Name, username),
                     new Claim("database_name", result.DatabaseName ?? string.Empty),
-                    new Claim("tenant", result.Tenant ?? string.Empty)
+                    new Claim("tenant", result.Tenant ?? string.Empty),
+                    new Claim("customer_code", result.UserCode ?? string.Empty)
                 };
 
                 var identity = new ClaimsIdentity(claims, Scheme.Name);
