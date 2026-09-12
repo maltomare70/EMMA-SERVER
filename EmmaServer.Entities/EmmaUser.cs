@@ -24,5 +24,7 @@ public record EmmaUser : IEntity
     
     [Column(TypeName = "varchar(256)")]
     public string? codice { get; set; }
+
+    public bool enabled { get; set; } = false;
 }
 

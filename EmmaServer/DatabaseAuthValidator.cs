@@ -29,7 +29,7 @@ public class DatabaseAuthValidator: IBasicAuthValidator
     public async Task<AuthValidationResult> ValidaCredenzialiAsync(string email, string password)
     {
             using var db = CreaConnessione();
-            const string sql = "SELECT * FROM users WHERE email = @email;";
+            const string sql = "SELECT * FROM users WHERE email = @email AND enabled = true;";
             var user = await db.QueryFirstAsync<EmmaUser>(sql, new { email = email.ToLowerInvariant() });
             
             if ( user is null || string.IsNullOrWhiteSpace(user.pwd)) return new AuthValidationResult(false, null, null, null);

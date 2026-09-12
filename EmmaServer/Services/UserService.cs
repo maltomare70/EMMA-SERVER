@@ -41,6 +41,7 @@ public class UserService : IUserService
             pwd = PasswordHelper.GeneraHash(user.pwd ?? string.Empty),
             tenant = user.tenant,
             codice = user.codice,
+            enabled = user.enabled,
         };
 
         return await _repoUser.AddAsync(emmaUser);
