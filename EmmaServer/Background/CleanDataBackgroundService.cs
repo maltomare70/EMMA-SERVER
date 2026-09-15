@@ -1,48 +1,20 @@
-﻿using Emma.Batches;
+using Emma.Batches;
 
 namespace EmmaServer.Background;
 
-
-public class CleanDataBackgroundService : BackgroundService
+/// <summary>
+/// Pulizia periodica dei documenti chiusi (sezione "CleanData", intervallo di default 60 minuti).
+/// </summary>
+public class CleanDataBackgroundService : BatchPeriodicoBackgroundService
 {
-    private readonly ICleanDocs _docService;
-    private readonly IConfiguration _config;
-    private readonly int _minutes = 10;
-    public CleanDataBackgroundService(IConfiguration config, ICleanDocs docService)
-    {
-        _config = config;
-        _docService = docService;
-        _minutes = 60;
+    private readonly ICleanDocs _cleanDocs;
 
+    public CleanDataBackgroundService(IConfiguration config, ICleanDocs cleanDocs,
+        ILogger<CleanDataBackgroundService> logger)
+        : base(config, logger, sezione: "CleanData", minutiDefault: 60)
+    {
+        _cleanDocs = cleanDocs;
     }
 
-    private async Task<bool> IsReadyToRun()
-    {
-        var enabled = _config["CleanData:Enabled"]?.ToString();
-        Boolean.TryParse(enabled, out bool bEnabled);
-
-        return bEnabled;
-    }
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            if (await IsReadyToRun())
-            {
-                try
-                {
-                    await _docService.ExecuteAsync();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-                finally
-                {
-                    await Task.Delay(TimeSpan.FromMinutes(_minutes), stoppingToken);
-                }
-            }
-        }
-    }
-
+    protected override Task EseguiAsync(CancellationToken stoppingToken) => _cleanDocs.ExecuteAsync();
 }

@@ -6,6 +6,7 @@ using Npgsql;
 using System.Data;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 
 
@@ -57,32 +58,68 @@ public class EmmaRepository: IEmmaRepository
         await CreateTableFromClassAsync<EmmaArticoli>();
         await CreateTableFromClassAsync<EmmaLog>();
 
-        //await CreateTableFromClassAsync<EmmaConciliaMaster>();
         await CreateTableFromClassAsync<EmmaConciliaRighe>();
 
-        await ExecuteSqlMigratione("Migrations/sql_001.sql");
-        await ExecuteSqlMigratione("Migrations/sql_002.sql");
+        // Esegui tutte le migration presenti nella cartella Migrations in ordine numerico (sql_001.sql, sql_002.sql, ...)
+        await ExecuteSqlMigrationsFromFolderAsync("Migrations");
     }
     
-    private async Task ExecuteSqlMigratione(string filePath)
-    {
-        // Risolvi percorso rispetto alla directory di esecuzione dell'app (output/publish)
-        var relativePath = filePath.Replace('/', Path.DirectorySeparatorChar);
-        var path = Path.Combine(AppContext.BaseDirectory, relativePath);
+    //private async Task ExecuteSqlMigratione(string filePath)
+    //{
+    //    // Risolvi percorso rispetto alla directory di esecuzione dell'app (output/publish)
+    //    var relativePath = filePath.Replace('/', Path.DirectorySeparatorChar);
+    //    var path = Path.Combine(AppContext.BaseDirectory, relativePath);
 
-        // Se non esiste nella directory di base dell'app, prova la working directory corrente
-        if (!File.Exists(path))
-        {       
-            var fallback = Path.Combine(Directory.GetCurrentDirectory(), relativePath);
-            if (File.Exists(fallback))
-                path = fallback;
+    //    // Se non esiste nella directory di base dell'app, prova la working directory corrente
+    //    if (!File.Exists(path))
+    //    {       
+    //        var fallback = Path.Combine(Directory.GetCurrentDirectory(), relativePath);
+    //        if (File.Exists(fallback))
+    //            path = fallback;
+    //        else
+    //            throw new FileNotFoundException($"Migration file not found: {filePath}");
+    //    }
+
+    //    var sql = await File.ReadAllTextAsync(path);
+    //    using var db = await CreaConnessione();
+    //    await db.ExecuteAsync(sql);
+    //}
+
+    private async Task ExecuteSqlMigrationsFromFolderAsync(string relativeFolder)
+    {
+        var folderRel = relativeFolder.Replace('/', Path.DirectorySeparatorChar);
+        var baseFolder = Path.Combine(AppContext.BaseDirectory, folderRel);
+        string folder;
+
+        if (Directory.Exists(baseFolder))
+            folder = baseFolder;
+        else
+        {
+            var fallback = Path.Combine(Directory.GetCurrentDirectory(), folderRel);
+            if (Directory.Exists(fallback))
+                folder = fallback;
             else
-                throw new FileNotFoundException($"Migration file not found: {filePath}");
+                return; // Nessuna cartella Migrations trovata, non fare nulla
         }
 
-        var sql = await File.ReadAllTextAsync(path);
+        var files = Directory.GetFiles(folder, "sql_*.sql");
+        var regex = new Regex(@"sql_(\d+)\.sql$", RegexOptions.IgnoreCase);
+
+        var ordered = files
+            .Select(f => new { Path = f, Match = regex.Match(Path.GetFileName(f)) })
+            .OrderBy(x => x.Match.Success ? int.Parse(x.Match.Groups[1].Value) : int.MaxValue)
+            .Select(x => x.Path)
+            .ToList();
+
+        if (!ordered.Any())
+            return;
+
         using var db = await CreaConnessione();
-        await db.ExecuteAsync(sql);
+        foreach (var file in ordered)
+        {
+            var sql = await File.ReadAllTextAsync(file);
+            await db.ExecuteAsync(sql);
+        }
     }
    
 

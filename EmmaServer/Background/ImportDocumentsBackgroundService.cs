@@ -1,48 +1,56 @@
-﻿using Emma.Batches;
+using Emma.Batches;
 
 namespace EmmaServer.Background;
 
-public class ImportDocumentsBackgroundService : BackgroundService
+/// <summary>
+/// Import dei documenti dalla casella di posta (sezione "ImportBatchDoc", intervallo di default 10 minuti).
+///
+/// EmailReader (bolle) ed EmailReaderDoc (documenti RAG) leggono entrambi le mail NON LETTE della
+/// Inbox e le segnano come lette. Sulla stessa casella si ruberebbero i messaggi a vicenda: una bolla
+/// finirebbe nel database vettoriale, o un manuale verrebbe mandato a EMMA-AI come DDT.
+/// Per questo, se i due import sono attivi sulla stessa casella, questo servizio non parte.
+/// </summary>
+public class ImportDocumentsBackgroundService : BatchPeriodicoBackgroundService
 {
     private readonly IEmailReaderDoc _emailReaderDoc;
     private readonly IConfiguration _config;
-    private readonly int _minutes = 10;
-    public ImportDocumentsBackgroundService(IConfiguration config, IEmailReaderDoc emailReaderDoc)
+    private readonly ILogger<ImportDocumentsBackgroundService> _logger;
+
+    public ImportDocumentsBackgroundService(IConfiguration config, IEmailReaderDoc emailReaderDoc,
+        ILogger<ImportDocumentsBackgroundService> logger)
+        : base(config, logger, sezione: "ImportBatchDoc", minutiDefault: 10)
     {
-        _config = config;
         _emailReaderDoc = emailReaderDoc;
-        var minutes = _config["ImportBatchDoc:Minutes"] ?? "10";
-        int.TryParse(minutes, out int _minutes);
-
+        _config = config;
+        _logger = logger;
     }
 
-    private async Task<bool> IsReadyToRun()
+    protected override Task EseguiAsync(CancellationToken stoppingToken)
     {
-        var enabled = _config["ImportBatchDOc:Enabled"]?.ToString();
-        Boolean.TryParse(enabled, out bool bEnabled);
-
-        return bEnabled;
-    }
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        while (!stoppingToken.IsCancellationRequested)
+        if (StessaCasellaDelleBolle())
         {
-            if (await IsReadyToRun())
-            {
-                try
-                {
-                    await _emailReaderDoc.ExecuteAsync();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-                finally
-                {
-                    await Task.Delay(TimeSpan.FromMinutes(_minutes), stoppingToken);
-                }
-            }
+            _logger.LogWarning(
+                "Import documenti sospeso: ImportBatchDoc usa la stessa casella IMAP di ImportBatch ({Utente}). " +
+                "Configurare una casella diversa oppure disattivare uno dei due import.",
+                _config["ImportBatchDoc:ImapUser"]);
+            return Task.CompletedTask;
         }
+
+        return _emailReaderDoc.ExecuteAsync();
     }
 
+    private bool StessaCasellaDelleBolle()
+    {
+        if (!bool.TryParse(_config["ImportBatch:Enabled"], out var bolleAttive) || !bolleAttive) return false;
+
+        var utenteBolle = _config["ImportBatch:ImapUser"]?.Trim();
+        var utenteDoc = _config["ImportBatchDoc:ImapUser"]?.Trim();
+        if (string.IsNullOrEmpty(utenteBolle) || string.IsNullOrEmpty(utenteDoc)) return false;
+
+        var serverBolle = _config["ImportBatch:ImapServer"]?.Trim() ?? string.Empty;
+        var serverDoc = (_config["ImportBatchDoc:ImapServer"] ?? _config["ImportBatch:ImapServer"])?.Trim() ?? string.Empty;
+
+        return string.Equals(utenteBolle, utenteDoc, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(serverBolle, serverDoc, StringComparison.OrdinalIgnoreCase);
+    }
 }

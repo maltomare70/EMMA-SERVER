@@ -50,6 +50,10 @@ builder.Services.AddScoped<IConciliazioneService, ConciliazioneService>();
 builder.Services.AddScoped<IConciliaRigheService, ConciliaRigheService>();
 builder.Services.AddScoped<IConciliaRigheRepository, ConciliaRigheRepository>();
 
+// --- Modulo anomalie prezzi/quantita' (docs/modulo-anomalie.md) ---
+builder.Services.AddScoped<IAnomalieRepository, AnomalieRepository>();
+builder.Services.AddScoped<IAnomalieService, AnomalieService>();
+
 // --- Database vettoriale (PDF -> chunk -> embedding -> pgvector) ---
 // Il tokenizer carica il vocabolario cl100k_base una volta sola: singleton.
 builder.Services.AddSingleton<ITokenChunker, TokenChunker>();
@@ -71,14 +75,17 @@ builder.Services.AddSingleton<IEmailReader>(sp => new EmailReader(emailReaderOpt
 
 builder.Services.AddSingleton<ICleanDocs>(sp => new CleanDocs(emailReaderOptions));
 
+// Import documenti (RAG): sezione ImportBatchDoc, separata da ImportBatch.
+// Server e ImapServer ripiegano su ImportBatch se mancano; utente e password NO:
+// la casella deve essere diversa da quella delle bolle (vedi ImportDocumentsBackgroundService).
 EmailReaderDocOptions emailReaderDocOptions = new EmailReaderDocOptions()
 {
     AdminPassword = builder.Configuration["Admin:Password"],
-    ServerUrl = builder.Configuration["ImportBatch:Server"],
-    ImapServerUrl = builder.Configuration["ImportBatch:ImapServer"],
+    ServerUrl = builder.Configuration["ImportBatchDoc:Server"] ?? builder.Configuration["ImportBatch:Server"],
+    ImapServerUrl = builder.Configuration["ImportBatchDoc:ImapServer"] ?? builder.Configuration["ImportBatch:ImapServer"],
     ImapServerPort = 993,
-    ImapUser = builder.Configuration["ImportBatch:ImapUser"],
-    ImapPassword = builder.Configuration["ImportBatch:ImapPassword"],
+    ImapUser = builder.Configuration["ImportBatchDoc:ImapUser"],
+    ImapPassword = builder.Configuration["ImportBatchDoc:ImapPassword"],
 
 };
 builder.Services.AddSingleton<IEmailReaderDoc>(sp => new EmailReaderDoc(emailReaderDocOptions));
@@ -97,7 +104,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpClient();
 
 builder.Services.AddHostedService<ImportDocBackgroundService>();
+builder.Services.AddHostedService<ImportDocumentsBackgroundService>();
 builder.Services.AddHostedService<CleanDataBackgroundService>();
+builder.Services.AddHostedService<AnomalieBackgroundService>();
 
 builder.Services.AddCors(options =>
 {
@@ -166,6 +175,7 @@ app.MapFornitoreRoutes();
 app.MapArticoliRoutes();
 app.MapLogsRoutes();
 app.MapConciliazioneRoutes();
+app.MapAnomalieRoutes();
 
 app.UseCors("AllowAll");
 app.UseAuthentication();

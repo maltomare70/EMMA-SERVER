@@ -43,8 +43,10 @@ public class DocService : IDocService
     private readonly IConfiguration _configuration;
     private readonly ILogService _logService;
     private readonly IConciliaRigheService _conciliaRigheService;
+    private readonly IAnomalieService _anomalieService;
     public DocService(IDocRepository repo, IFornitoriService fornitoriService,
-        IArticoliService articoliService, IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogService logService, IConciliaRigheService conciliaRigheService)
+        IArticoliService articoliService, IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogService logService, IConciliaRigheService conciliaRigheService,
+        IAnomalieService anomalieService)
     {
         _repo = repo;
         _fornitoriService = fornitoriService;
@@ -53,6 +55,7 @@ public class DocService : IDocService
         _configuration = configuration;
         _logService = logService;
         _conciliaRigheService = conciliaRigheService;
+        _anomalieService = anomalieService;
     }
 
     public async Task AddOrUpdateFornitorieArticoli(int docId)
@@ -267,6 +270,9 @@ public class DocService : IDocService
         //if (idDoc is not null) await AggiornaAnagrafiche(idDoc.Value);
         ////--------------------------------------------------------------------------------
 
+        // Anomalie prezzi/quantita' (baseline separata per le fatture, tipo_doc 4)
+        if (newDoc is not null) await AnalizzaAnomalie(newDoc.id);
+
         return new DocResponse()
         {
             DocId = newDoc is not null ? newDoc.id : 0,
@@ -383,6 +389,9 @@ public class DocService : IDocService
                     //--------------------------------------------------------------------------------
                     if (newDoc is not null) await AggiornaAnagrafiche(newDoc.id);
                     ////--------------------------------------------------------------------------------
+
+                    // Anomalie prezzi/quantita': dopo le anagrafiche, cosi' fornitore e articoli sono allineati
+                    if (newDoc is not null) await AnalizzaAnomalie(newDoc.id);
                 }
 
                 return new DocResponse()
@@ -432,6 +441,21 @@ public class DocService : IDocService
             });
 
             throw new ApplicationException($"Internal server error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Un'anomalia non rilevata e' meglio di un documento rifiutato: nessuna eccezione verso l'import.
+    /// </summary>
+    private async Task AnalizzaAnomalie(int idDoc)
+    {
+        try
+        {
+            await _anomalieService.AnalizzaDocumentoAsync(idDoc);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Anomalie non calcolate per il documento {idDoc}: {ex.Message}");
         }
     }
 

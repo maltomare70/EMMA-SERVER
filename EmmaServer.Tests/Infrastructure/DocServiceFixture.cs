@@ -57,6 +57,8 @@ public sealed class DocServiceFixture : IDisposable
         servizi.AddScoped<IFornitoriService, global::EmmaServer.Services.FornitoriService>();
         servizi.AddScoped<IArticoliService, global::EmmaServer.Services.ArticoliService>();
         servizi.AddScoped<ILogService, global::EmmaServer.Services.LogService>();
+        servizi.AddScoped<IAnomalieRepository, global::EmmaServer.Repositories.AnomalieRepository>();
+        servizi.AddScoped<IAnomalieService, global::EmmaServer.Services.AnomalieService>();
         servizi.AddScoped<IDocService, global::EmmaServer.Services.DocService>();
 
         _provider = servizi.BuildServiceProvider();
@@ -65,6 +67,7 @@ public sealed class DocServiceFixture : IDisposable
         DocService = _scope.ServiceProvider.GetRequiredService<IDocService>();
         DocRepository = _scope.ServiceProvider.GetRequiredService<IDocRepository>();
         FornitoriService = _scope.ServiceProvider.GetRequiredService<IFornitoriService>();
+        AnomalieService = _scope.ServiceProvider.GetRequiredService<IAnomalieService>();
     }
 
     /// <summary>Tenant sotto cui vengono create tutte le bolle di prova.</summary>
@@ -79,6 +82,8 @@ public sealed class DocServiceFixture : IDisposable
     public IDocRepository DocRepository { get; }
 
     public IFornitoriService FornitoriService { get; }
+
+    public IAnomalieService AnomalieService { get; }
 
     /// <summary>Conta le righe della tabella docs per il tenant di test: utile per le asserzioni.</summary>
     public async Task<int> ContaDocumentiDelTenantAsync()
