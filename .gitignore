@@ -12,3 +12,5 @@ EmmaServer.Tests/obj
 EmmaServer.Tests/bin
 EmmaServer/appsettings.Development.json
 deploy/emma-server.env
+EmmaServer.DataSeed.Tests/bin
+EmmaServer.DataSeed.Tests/obj
