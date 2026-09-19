@@ -66,7 +66,7 @@ public static class TestSettings
         var valore = Configurazione["Database:SslMode"];
         return Enum.TryParse<SslMode>(valore, ignoreCase: true, out var modalita)
             ? modalita
-            : SslMode.Require;
+            : SslMode.Allow;
     }
 
     private static IConfiguration CostruisciConfigurazione()

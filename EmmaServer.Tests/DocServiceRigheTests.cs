@@ -130,7 +130,7 @@ public class DocServiceRigheTests
     /// Il test e' disattivato perche' allo stato attuale fallisce. Per riattivarlo basta togliere
     /// Skip dopo aver aggiunto <c>allegato</c> alle SELECT in DocRepository.
     /// </summary>
-    [IntegrationFact(Skip = "Bug noto: le SELECT delle righe non leggono 'allegato' e UpdateAsync lo azzera")]
+    [IntegrationFact()]
     public async Task InsertRigaDocAsync_NonDeveAzzerareLAllegato()
     {
         var allegato = BollaFactory.AllegatoDiProva();

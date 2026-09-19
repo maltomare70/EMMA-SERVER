@@ -67,7 +67,7 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
 
         // 1. Base query and static conditions
         var sqlBuilder = new StringBuilder(@"
-        SELECT id, file_name, data_creazione, content, tenant, stato 
+        SELECT id, file_name, data_creazione, content, tenant, stato , allegato
         FROM docs 
         WHERE tenant = @Tenant");
         var parametri = new DynamicParameters();
@@ -92,7 +92,7 @@ public class DocRepository: RepositoryGenerico<EmmaDoc>, IDocRepository
         riga.Imponibile = articoloBolla.Imponibile;
         riga.Totale = articoloBolla.Totale;
         riga.Iva = articoloBolla.Iva;
-        riga.UnitaMisura = articoloBolla.UnitaMisura;
+        riga.UnitaMisura = articoloBolla.UnitaMisura;        
         ddtResponse?.Document.Articoli.Add(riga);
 
         using JsonDocument ddtResponseModificato = ConvertObjectToJsonDocument(ddtResponse);

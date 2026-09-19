@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using EmmaServer.Repositories;
 using EmmaServer.Services;
 using Microsoft.Extensions.Configuration;
@@ -59,6 +59,8 @@ public sealed class DocServiceFixture : IDisposable
         servizi.AddScoped<ILogService, global::EmmaServer.Services.LogService>();
         servizi.AddScoped<IAnomalieRepository, global::EmmaServer.Repositories.AnomalieRepository>();
         servizi.AddScoped<IAnomalieService, global::EmmaServer.Services.AnomalieService>();
+        servizi.AddScoped<IConciliaRigheRepository, global::EmmaServer.Repositories.ConciliaRigheRepository>();
+        servizi.AddScoped<IConciliaRigheService, global::EmmaServer.Services.ConciliaRigheService>();
         servizi.AddScoped<IDocService, global::EmmaServer.Services.DocService>();
 
         _provider = servizi.BuildServiceProvider();
