@@ -123,7 +123,7 @@ public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServi
     {
         var payload = new PayloadRiconciliazione
         {
-            codice = Guid.NewGuid().ToString(),
+            codice = Guid.NewGuid().ToString(), //deve essere per riga di abbinamento e non unico
             tipo = tipo,
             bolle = bolle,
             fatture = fatture
@@ -139,7 +139,7 @@ public class ConciliazioneServiceClient : ServiceClientBase, IConciliazioneServi
             {
                 Id = r.IdRiga ?? string.Empty,
                 Codice = r.CodiceArticolo ?? string.Empty,
-                Qta = r.Qta
+                Qta = r.Qta - r.Qta_Conc
             })
             .ToList();
 }

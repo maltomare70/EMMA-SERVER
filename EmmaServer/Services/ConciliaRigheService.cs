@@ -61,7 +61,7 @@ public class ConciliaRigheService : IConciliaRigheService
         {
             var item = new EmmaConciliaRighe()
             {
-                codice = payload.codice ?? string.Empty,
+                codice = b.CodiceAbbinamento,
                 delta = b.Qta - b.Qta_Conc,
                 flag = b.Selezionato ? 1 : 0,
                 id_fornitore = b.Fornitore ?? string.Empty,
@@ -85,7 +85,7 @@ public class ConciliaRigheService : IConciliaRigheService
         {
             var item = new EmmaConciliaRighe()
             {
-                codice = payload.codice ?? string.Empty,
+                codice = b.CodiceAbbinamento,
                 delta = b.Qta - b.Qta_Conc,
                 flag = b.Selezionato ? 1 : 0,
                 id_fornitore = b.Fornitore ?? string.Empty,

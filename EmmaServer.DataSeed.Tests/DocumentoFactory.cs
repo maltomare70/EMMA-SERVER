@@ -124,7 +124,7 @@ public static class DocumentoFactory
             articoli.Add(new ArticoloBolla
             {
                 Id_Master = idMaster,
-                Id_Riga = (i + 1).ToString(CultureInfo.InvariantCulture),
+                Id_Riga = Guid.NewGuid().ToString() , //(i + 1).ToString(CultureInfo.InvariantCulture),
                 Codice = riga.Codice,
                 Descrizione = riga.Descrizione,
                 Quantita = riga.Quantita,

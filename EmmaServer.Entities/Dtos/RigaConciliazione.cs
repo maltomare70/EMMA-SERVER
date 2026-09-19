@@ -41,4 +41,5 @@ public class RigaConciliazione
 
     /// <summary>Data documento convertita, quando interpretabile.</summary>
     public DateTime? Data { get; set; }
+    public string CodiceAbbinamento { get; set; } = string.Empty;
 }
