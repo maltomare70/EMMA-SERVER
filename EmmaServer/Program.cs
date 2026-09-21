@@ -49,6 +49,7 @@ builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IConciliazioneService, ConciliazioneService>();
 builder.Services.AddScoped<IConciliaRigheService, ConciliaRigheService>();
 builder.Services.AddScoped<IConciliaRigheRepository, ConciliaRigheRepository>();
+builder.Services.AddScoped<IDocServiceExtension, DocServiceExtension>();
 
 // --- Modulo anomalie prezzi/quantita' (docs/modulo-anomalie.md) ---
 builder.Services.AddScoped<IAnomalieRepository, AnomalieRepository>();
@@ -107,6 +108,8 @@ builder.Services.AddHostedService<ImportDocBackgroundService>();
 builder.Services.AddHostedService<ImportDocumentsBackgroundService>();
 builder.Services.AddHostedService<CleanDataBackgroundService>();
 builder.Services.AddHostedService<AnomalieBackgroundService>();
+builder.Services.AddHostedService<ChiudiDocumentiBackgroundService>();
+
 
 builder.Services.AddCors(options =>
 {

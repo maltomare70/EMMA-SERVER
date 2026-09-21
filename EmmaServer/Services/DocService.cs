@@ -32,6 +32,8 @@ public interface IDocService
 
     Task<DocResponse> ImportDocAsync(IFormFile file, string tenant);
     Task<DocResponse> ImportFatturaElettronicaAsync(IFormFile file, string tenant);
+
+   
 }
 
 public class DocService : IDocService
@@ -63,7 +65,7 @@ public class DocService : IDocService
         int idFornitore = await _fornitoriService.AddOrUpdateFornitoriByDocIdAsync(docId);
         await _articoliService.AddOrUpdateArticoliByDocIdAsync(docId, idFornitore);
     }
-    
+
     public async Task<int?> AddAsync(EmmaDoc doc)
     {
         return await _repo.AddAsync(doc);
@@ -73,7 +75,7 @@ public class DocService : IDocService
     {
         return await _repo.UpdateAsync(doc);
     }
-    
+
     public async Task CambiaStatoAsync(CambioStato cambioStato)
     {
         await _repo.CambiaStatoAsync(cambioStato);
@@ -91,13 +93,13 @@ public class DocService : IDocService
         await _repo.InsertRigaDocAsync(articoloBolla);
     }
 
-    
+
     public async Task UpdateRigaDocAsync(ArticoloBolla articoloBolla)
     {
         await _repo.UpdateRigaDocAsync(articoloBolla);
     }
 
-    
+
     public async Task<bool?> DeleteAsync(EmmaDoc doc)
     {
         return await _repo.DeleteAsync(doc);
@@ -110,7 +112,7 @@ public class DocService : IDocService
         await _conciliaRigheService.DeleteAsync(articoloBolla.Id_Riga, 1, tenant);
         await _conciliaRigheService.DeleteAsync(articoloBolla.Id_Riga, 2, tenant);
     }
-    
+
     public async Task<List<EmmaDoc?>> GetDocsAsync(EmmaDocFilters emmaDocFilters)
     {
         return await _repo.GetDocsAsync(emmaDocFilters);
@@ -127,7 +129,7 @@ public class DocService : IDocService
     }
 
 
-    public async Task<EmmaDoc?> AddDocAsync(EmmaDocFilters emmaDocFilter, string json, 
+    public async Task<EmmaDoc?> AddDocAsync(EmmaDocFilters emmaDocFilter, string json,
         string fileName, byte[] file_byte, string tenant)
     {
         var doclist = await GetDocsAsync(emmaDocFilter);
@@ -139,12 +141,12 @@ public class DocService : IDocService
                 if (doc.stato == 0)
                     await DeleteAsync(doc);
                 else
-                    throw new Exception($"Documento {doc.ToDoc()?.TipoDocumento} - {doc.ToDoc()?.Mittente} - {doc.ToDoc()?.NumeroBolla} - {doc.ToDoc()?.DataBolla} già chiuso");                                    
+                    throw new Exception($"Documento {doc.ToDoc()?.TipoDocumento} - {doc.ToDoc()?.Mittente} - {doc.ToDoc()?.NumeroBolla} - {doc.ToDoc()?.DataBolla} già chiuso");
             }
         }
 
         //inserisco
-        var id =  await AddAsync((new EmmaDoc()
+        var id = await AddAsync((new EmmaDoc()
         {
             file_name = fileName,
             content = JsonDocument.Parse(json),
@@ -215,7 +217,7 @@ public class DocService : IDocService
             articoloBolla.Id_Master = idMaster.ToString();
             articoloBolla.Id_Riga = riga.NumeroLinea.ToString();
 
-            righe.Add(articoloBolla);    
+            righe.Add(articoloBolla);
             //Console.WriteLine($"[Linea {riga.NumeroLinea}] {riga.Descrizione} - Prezzo: {riga.PrezzoUnitario:C}");
             //foreach (var codice in riga.CodiceArticolo)
             //{
@@ -293,7 +295,7 @@ public class DocService : IDocService
         DdtResponse? ddtResponse = null;
 
         try
-        {        
+        {
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             var file_byte = await FileHelper.ConvertFormFileToByteArray(file);
@@ -470,5 +472,85 @@ public class DocService : IDocService
             Console.WriteLine(e);
             throw;
         }
+    }
+
+
+
+}
+
+
+public interface IDocServiceExtension
+{
+    Task ChiusuraAutomaticaDocumenti();
+
+    Task ChiusuraAutomaticaDocumento(string Id_Master, string tenant);
+}
+public class DocServiceExtension : IDocServiceExtension
+{
+    private readonly IDocRepository _repo;
+
+    private readonly IConfiguration _configuration;
+
+    private readonly IConciliaRigheService _conciliaRigheService;
+
+    public DocServiceExtension(IDocRepository repo, IConfiguration configuration, IConciliaRigheService conciliaRigheService        )
+    {
+        _repo = repo;
+
+        _configuration = configuration;
+
+        _conciliaRigheService = conciliaRigheService;
+
+    }
+
+    public async Task ChiusuraAutomaticaDocumenti()
+    {
+        var docs = await _repo.GetDocsAsync(new EmmaDocFilters()
+        {
+            Stato = 0
+        });
+
+        foreach (var doc in docs)
+        {
+            if (doc is not null)
+            {
+                var vdoc = doc.ToDoc();
+
+                if (vdoc is null) continue;
+
+                var first = vdoc.Articoli.FirstOrDefault();
+                if (first is null) continue;
+
+                await ChiusuraAutomaticaDocumento(first.Id_Master, doc.tenant);
+            }
+        }
+    }
+
+    public async Task ChiusuraAutomaticaDocumento(string Id_Master, string tenant)
+    {
+        var righe = await _conciliaRigheService.GetRigheConciliazioneAsync(Id_Master, string.Empty, tenant);
+
+        if (righe.Any())
+        {
+            decimal totaleDelta = righe.Sum(x => x.delta);
+            //foreach (var item in vdoc.Articoli)
+            //{
+            //    var righeFiltrate = righe.Where(x=>x.id_riga == item.Id_Riga && x.id_master == item.Id_Master).ToList();    
+            //    foreach (var item1 in righeFiltrate)
+            //    {
+            //        var delta = item1.delta;
+            //    }
+            //}
+
+            if (totaleDelta == 0)
+            {
+                await _repo.CambiaStatoAsync(new CambioStato()
+                {
+                    Id = Id_Master,
+                    Stato = 1
+                });
+            }
+        }
+        
     }
 }

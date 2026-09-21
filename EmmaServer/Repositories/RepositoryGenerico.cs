@@ -25,15 +25,15 @@ public class RepositoryGenerico<T> : IRepositoryGenerico<T> where T : class, IEn
 {
 
     private readonly IUserConnectionProvider _connectionProvider;
-    private readonly string? _tenant;
     public RepositoryGenerico(IUserConnectionProvider connectionProvider)
     {
         //_connectionString = "Host=localhost:5432;Username=marco;Password=malt0mare;Database=nome_db";
 
         _connectionProvider = connectionProvider;
-       
-        _tenant = _connectionProvider.GetTenant();
-        
+
+        // Non risolvere il tenant nel costruttore: fuori dal contesto HTTP (es. BackgroundService)
+        // GetTenant() verrà chiamato solo quando necessario nei metodi che richiedono esplicitamente il tenant.
+
         // Chicca: Questo dice a Dapper di mappare automaticamente 
         // le proprietà PascalCase (C#) con le colonne snake_case (Postgres)
         Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
