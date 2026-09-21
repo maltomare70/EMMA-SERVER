@@ -43,7 +43,7 @@ public class ChiudiDocumentiBackgroundService : BackgroundService
                 }
 
                 var servizio = scope.ServiceProvider.GetRequiredService<IDocServiceExtension>();
-                await servizio.ChiusuraAutomaticaDocumenti();
+                //await servizio.ChiusuraAutomaticaDocumenti(); TODO: da abilitare quando il batch sarà pronto
 
 
                 await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
