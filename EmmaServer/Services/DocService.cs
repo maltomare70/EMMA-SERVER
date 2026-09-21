@@ -483,7 +483,7 @@ public interface IDocServiceExtension
 {
     Task ChiusuraAutomaticaDocumenti();
 
-    Task ChiusuraAutomaticaDocumento(string Id_Master, string tenant);
+    Task ChiusuraAutomaticaDocumento(string Id_Master, string tipoDocumento, string tenant);
 }
 public class DocServiceExtension : IDocServiceExtension
 {
@@ -521,36 +521,59 @@ public class DocServiceExtension : IDocServiceExtension
                 var first = vdoc.Articoli.FirstOrDefault();
                 if (first is null) continue;
 
-                await ChiusuraAutomaticaDocumento(first.Id_Master, doc.tenant);
+                await ChiusuraAutomaticaDocumento(first.Id_Master, vdoc.TipoDocumento, doc.tenant);
             }
         }
     }
 
-    public async Task ChiusuraAutomaticaDocumento(string Id_Master, string tenant)
+    public async Task ChiusuraAutomaticaDocumento(string Id_Master, string tipoDocumento, string tenant)
     {
         var righe = await _conciliaRigheService.GetRigheConciliazioneAsync(Id_Master, string.Empty, tenant);
 
         if (righe.Any())
         {
-            decimal totaleDelta = righe.Sum(x => x.delta);
-            //foreach (var item in vdoc.Articoli)
-            //{
-            //    var righeFiltrate = righe.Where(x=>x.id_riga == item.Id_Riga && x.id_master == item.Id_Master).ToList();    
-            //    foreach (var item1 in righeFiltrate)
-            //    {
-            //        var delta = item1.delta;
-            //    }
-            //}
+            var totalsByTipo = righe.GroupBy(r => r.tipo_doc).Select(g => new { TipoDoc = g.Key, TotaleDelta = g.Sum(x => x.delta) }).ToList();
 
-            if (totaleDelta == 0)
+            //ORDINI
+            if (tipoDocumento == "1" && totalsByTipo.Count == 1)
             {
-                await _repo.CambiaStatoAsync(new CambioStato()
+                if (totalsByTipo[0].TotaleDelta == 0)
                 {
-                    Id = Id_Master,
-                    Stato = 1
-                });
+                    await _repo.CambiaStatoAsync(new CambioStato()
+                    {
+                        Id = Id_Master,
+                        Stato = 1
+                    });
+                }
             }
-        }
+
+            //DDT
+            if (tipoDocumento == "2" && totalsByTipo.Count == 2)
+            {
+                if (totalsByTipo[0].TotaleDelta == 0 && totalsByTipo[1].TotaleDelta == 0)
+                {
+                    await _repo.CambiaStatoAsync(new CambioStato()
+                    {
+                        Id = Id_Master,
+                        Stato = 1
+                    });
+                }
+            }
+
+
+            //FATTURE
+            if ((tipoDocumento == "3" || tipoDocumento == "4") && totalsByTipo.Count == 1)
+            {
+                if (totalsByTipo[0].TotaleDelta == 0)
+                {
+                    await _repo.CambiaStatoAsync(new CambioStato()
+                    {
+                        Id = Id_Master,
+                        Stato = 1
+                    });
+                }
+            }            
+         }
         
     }
 }

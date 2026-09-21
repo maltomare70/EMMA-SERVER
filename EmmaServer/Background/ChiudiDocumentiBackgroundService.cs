@@ -43,10 +43,10 @@ public class ChiudiDocumentiBackgroundService : BackgroundService
                 }
 
                 var servizio = scope.ServiceProvider.GetRequiredService<IDocServiceExtension>();
-               //await servizio.ChiusuraAutomaticaDocumenti();
+                await servizio.ChiusuraAutomaticaDocumenti();
 
 
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
